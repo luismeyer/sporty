@@ -1,0 +1,15 @@
+{
+  "name": "@qify/api",
+  "version": "1.0.0",
+  "license": "MIT",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "watch": "tsc -w",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "typescript": "^4.3.5"
+  }
+}

@@ -1,0 +1,163 @@
+service: qify
+
+frameworkVersion: "2"
+
+useDotenv: true
+
+custom:
+  stage: ${opt:stage, self:provider.stage}
+  awsEnv:
+    assetPreName: ${self:service}-${self:custom.stage}
+    arnRegionAndAccount: ${self:provider.region}:#{AWS::AccountId}
+  queueFunction:
+    name: ${self:custom.awsEnv.assetPreName}-queue
+    arn: arn:aws:lambda:${self:custom.awsEnv.arnRegionAndAccount}:function:${self:custom.queueFunction.name}
+  stateMachineRole:
+    name: Qify-${self:custom.stage}-StateMachine
+    arn: arn:aws:iam::#{AWS::AccountId}:role/${self:custom.stateMachineRole.name}
+  table: 
+    name: qify-${self:custom.stage}
+    arn: arn:aws:dynamodb:${self:custom.awsEnv.arnRegionAndAccount}:table/${self:custom.table.name}
+  jetpack:
+    preInclude:
+      - "!**"
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  region: eu-central-1
+  lambdaHashingVersion: "20201221"
+  stage: dev
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - ${self:custom.table.arn}
+            - ${self:custom.table.arn}/index/*
+        - Effect: Allow
+          Action:
+            - states:CreateStateMachine
+            - states:StartExecution
+            - states:DeleteStateMachine
+            - states:ListStateMachines
+            - states:UpdateStateMachine
+          Resource: arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:*
+        - Effect: Allow
+          Action:
+            - iam:PassRole
+          Resource: ${self:custom.stateMachineRole.arn}
+  environment:
+    DDB_TABLE: ${self:custom.table.name}
+    QUEUE_LAMBDA_ARN: ${self:custom.queueFunction.arn}
+    SESSION_INDEX: sessionIndex
+    ACCESS_TOKEN_INDEX: accessTokenIndex
+    SPOTIFY_ID_INDEX: spotifyIdIndex
+    STATE_MACHINE_ROLE_ARN: ${self:custom.stateMachineRole.arn}
+    SPOTIFY_CLIENT_ID: ${env:SPOTIFY_CLIENT_ID, file(.env.json):SPOTIFY_CLIENT_ID}
+    SPOTIFY_CLIENT_SECRET: ${env:SPOTIFY_CLIENT_SECRET, file(.env.json):SPOTIFY_CLIENT_SECRET}
+    CALLBACK_URL: ${env:CALLBACK_URL, file(.env.json):CALLBACK_URL}
+
+plugins:
+  - serverless-pseudo-parameters
+  - serverless-jetpack
+  - serverless-offline
+
+package:
+  individually: true
+
+functions:
+  backend:
+    handler: packages/backend/dist/handler.handler
+    events:
+      - httpApi:
+          path: /
+          method: "*"
+      - httpApi:
+          path: /{proxy+}
+          method: "*"
+    package:
+      include:
+        - "packages/backend/**"
+    jetpack:
+      roots:
+        - "packages/backend"
+
+  queue:
+    name: ${self:custom.queueFunction.name}
+    handler: packages/backend/dist/handler.queueFunction
+    package:
+      include:
+        - "packages/backend/**"
+    jetpack:
+      roots:
+        - "packages/backend"
+
+resources:
+  Resources:
+    QifyTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: accessToken
+            AttributeType: S
+          - AttributeName: session
+            AttributeType: S
+          - AttributeName: spotifyId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        TableName: ${self:custom.table.name}
+        GlobalSecondaryIndexes:
+          - IndexName: ${self:provider.environment.SESSION_INDEX}
+            KeySchema:
+              - AttributeName: session
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: ${self:provider.environment.ACCESS_TOKEN_INDEX}
+            KeySchema:
+              - AttributeName: accessToken
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: ${self:provider.environment.SPOTIFY_ID_INDEX}
+            KeySchema:
+              - AttributeName: spotifyId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+
+    StateMachineRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: ${self:custom.stateMachineRole.name}
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Action: sts:AssumeRole
+              Principal:
+                Service: 
+                  - states.${self:provider.region}.amazonaws.com
+        Policies:
+          - PolicyName: StatesExecutionPolicy
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - "lambda:InvokeFunction"
+                  Resource: "*"
+

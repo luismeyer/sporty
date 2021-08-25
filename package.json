@@ -1,0 +1,29 @@
+{
+  "name": "qify",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ],
+    "nohoist": [
+      "**/*",
+      "**/*/**"
+    ]
+  },
+  "scripts": {
+    "start": "sls offline start",
+    "watch": "lerna run --parallel watch",
+    "build": "lerna run --parallel build",
+    "db:install": "sls dynamodb install"
+  },
+  "devDependencies": {
+    "concurrently": "^6.2.1",
+    "lerna": "^4.0.0",
+    "serverless-jetpack": "^0.11.1",
+    "serverless-offline": "^8.0.0",
+    "serverless-pseudo-parameters": "^2.6.0"
+  }
+}
