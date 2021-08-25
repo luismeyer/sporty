@@ -3,8 +3,9 @@ import uniqid from "uniqid";
 
 import { User } from "@qify/api";
 
-import { spotifyIdIndex, putItem, queryItems, updateTokens } from "./db";
-import { callSpotify, codeGrant, spotify } from "./spotify";
+import { putItem, queryItems, spotifyIdIndex } from "../services/db";
+import { callSpotify, codeGrant, spotify } from "../services/spotify";
+import { updateTokens } from "../helpers/user";
 
 const queryUserBySpotifyId = async (id: string) => {
   const expressionAttributeNames = { "#spotifyId": "spotifyId" };

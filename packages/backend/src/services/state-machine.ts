@@ -1,7 +1,7 @@
 import AWS from "aws-sdk";
 
-import { stateMachineRoleArn, queueLambdaArn } from "./const";
-import { timer } from "./timer";
+import { stateMachineRoleArn, queueLambdaArn } from "../helpers/const";
+import { timer } from "../helpers/timer";
 
 const stepFunctions = new AWS.StepFunctions({ region: "eu-central-1" });
 

@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 
-import { authorizeURL } from "./spotify";
+import { authorizeURL } from "../services/spotify";
 
 export const redirectUri = "http://localhost:3000/authorize";
 

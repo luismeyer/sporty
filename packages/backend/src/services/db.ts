@@ -1,6 +1,6 @@
 import AWS from "aws-sdk";
 
-import { ddbTable } from "./const";
+import { ddbTable } from "../helpers/const";
 
 const { SPOTIFY_ID_INDEX, SESSION_INDEX } = process.env;
 
@@ -39,7 +39,7 @@ export const putItem = async <T>(item: T): Promise<T | undefined> => {
 
 type ScanInput = {
   expressionAttributeNames: AWS.DynamoDB.DocumentClient.ExpressionAttributeNameMap;
-  expressionAttributeValues: AWS.DynamoDB.DocumentClient.ExpressionAttributeNameMap;
+  expressionAttributeValues: AWS.DynamoDB.DocumentClient.ExpressionAttributeValueMap;
   scanFilter: string;
 };
 
@@ -60,7 +60,7 @@ export const scanItems = async <T>(input: ScanInput): Promise<T[]> => {
 
 type QueryInput = {
   expressionAttributeNames: AWS.DynamoDB.DocumentClient.ExpressionAttributeNameMap;
-  expressionAttributeValues: AWS.DynamoDB.DocumentClient.ExpressionAttributeNameMap;
+  expressionAttributeValues: AWS.DynamoDB.DocumentClient.ExpressionAttributeValueMap;
   keyConditionExpression: string;
 };
 
@@ -85,7 +85,7 @@ export const queryItems = async <T>(
 
 type UpdateInput = {
   expressionAttributeNames?: AWS.DynamoDB.DocumentClient.ExpressionAttributeNameMap;
-  expressionAttributeValues?: AWS.DynamoDB.DocumentClient.ExpressionAttributeNameMap;
+  expressionAttributeValues?: AWS.DynamoDB.DocumentClient.ExpressionAttributeValueMap;
   updateExpression: string;
 };
 
@@ -97,30 +97,4 @@ export const updateItem = async (id: string, input: UpdateInput) => {
     ExpressionAttributeNames: input.expressionAttributeNames,
     ExpressionAttributeValues: input.expressionAttributeValues,
   }).promise();
-};
-
-export const updateTokens = async (
-  id: string,
-  accessToken: string,
-  refreshToken?: string
-) => {
-  const expressionAttributeNames = {
-    "#accessToken": "accessToken",
-    ...(refreshToken && { "#refreshToken": "refreshToken" }),
-  };
-
-  const expressionAttributeValues = {
-    ":accessToken": accessToken,
-    ...(refreshToken && { ":refreshToken": refreshToken }),
-  };
-
-  const updateExpression = `SET #accessToken = :accessToken ${
-    refreshToken ? ", #refreshToken = :refreshToken" : ""
-  }`;
-
-  await updateItem(id, {
-    expressionAttributeNames,
-    expressionAttributeValues,
-    updateExpression,
-  });
 };

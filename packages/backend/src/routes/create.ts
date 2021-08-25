@@ -2,9 +2,9 @@ import { RequestHandler } from "express";
 
 import { User } from "@qify/api";
 
-import { getItem, putItem } from "./db";
-import { createStateMachine } from "./state-machine";
-import { callSpotify, spotify } from "./spotify";
+import { getItem, putItem } from "../services/db";
+import { createStateMachine } from "../services/state-machine";
+import { callSpotify, spotify } from "../services/spotify";
 
 export const create: RequestHandler = async (req, res) => {
   const { id } = req.query;

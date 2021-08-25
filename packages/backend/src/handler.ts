@@ -2,18 +2,19 @@ import { Handler } from "aws-lambda";
 import express from "express";
 import serverless from "serverless-http";
 
-import { User } from "../../api/dist";
-import { authorize } from "./authorize";
-import { create } from "./create";
-import { queryItems, sessionIndex } from "./db";
-import { leave } from "./leave";
-import { login } from "./login";
-import { callSpotify, spotify } from "./spotify";
+import { leave } from "./routes/leave";
+import { login } from "./routes/login";
+import { remove } from "./routes/remove";
+import { add } from "./routes/add";
+import { authorize } from "./routes/authorize";
+import { create } from "./routes/create";
+import { callSpotify, spotify } from "./services/spotify";
 import {
   deleteStateMachine,
   stateMachineArn,
   updateStateMachine,
-} from "./state-machine";
+} from "./services/state-machine";
+import { sessionUsers } from "./helpers/user";
 
 const app = express();
 
@@ -24,6 +25,9 @@ app.get("/authorize", authorize);
 
 app.get("/create", create);
 app.get("/leave", leave);
+
+app.get("/add", add);
+app.get("/remove", remove);
 
 app.use((_req, res, _next) => {
   return res.status(404).json({
@@ -40,13 +44,9 @@ export const queueFunction: Handler<{ session?: string }> = async (event) => {
     return;
   }
 
-  const sessionUsers = await queryItems<User>(sessionIndex, {
-    expressionAttributeNames: { "#session": "session" },
-    expressionAttributeValues: { ":session": session },
-    keyConditionExpression: "#session = :session",
-  });
+  const users = await sessionUsers(session);
 
-  if (sessionUsers.length === 0) {
+  if (users.length === 0) {
     const arn = await stateMachineArn(session);
 
     if (!arn) {
@@ -58,7 +58,7 @@ export const queueFunction: Handler<{ session?: string }> = async (event) => {
     return "success";
   }
 
-  const sessionOwner = sessionUsers.find((user) => user.isOwner);
+  const sessionOwner = users.find((user) => user.isOwner);
 
   if (!sessionOwner) {
     return "No session owner";

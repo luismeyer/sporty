@@ -1,6 +1,8 @@
 import { RequestHandler } from "express";
-import { User } from "../../api/dist";
-import { getItem, updateItem } from "./db";
+
+import { User } from "@qify/api";
+
+import { getItem, updateItem } from "../services/db";
 
 export const leave: RequestHandler = async (req, res) => {
   const { id } = req.query;
