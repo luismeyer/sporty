@@ -1,6 +1,8 @@
-import { User } from '@qify/api';
+import { Request } from "express";
 
-import { queryItems, sessionIndex, updateItem } from '../services/db';
+import { User } from "@qify/api";
+
+import { getItem, queryItems, sessionIndex, updateItem } from "../services/db";
 
 export const updateTokens = async (
   id: string,
@@ -34,4 +36,18 @@ export const sessionUsers = async (session: string) => {
     expressionAttributeValues: { ":session": session },
     keyConditionExpression: "#session = :session",
   });
+};
+
+export const authorizeRequest = async (
+  headers: Request["headers"]
+): Promise<User | undefined> => {
+  const { authorization } = headers;
+
+  if (!authorization) {
+    return;
+  }
+
+  const [_, token] = authorization.split(" ");
+
+  return getItem(token);
 };

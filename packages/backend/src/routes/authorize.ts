@@ -1,11 +1,17 @@
-import { RequestHandler } from 'express';
-import uniqid from 'uniqid';
+import crypto from "crypto";
+import { RequestHandler } from "express";
+import { v4 } from "uuid";
 
-import { User } from '@qify/api';
+import { User } from "@qify/api";
 
-import { updateTokens } from '../helpers/user';
-import { putItem, queryItems, spotifyIdIndex } from '../services/db';
-import { callSpotify, codeGrant, spotify } from '../services/spotify';
+import { qifySecret } from "../helpers/const";
+import { updateTokens } from "../helpers/user";
+import { putItem, queryItems, spotifyIdIndex } from "../services/db";
+import { callSpotify, codeGrant, spotify } from "../services/spotify";
+
+const hashId = (id: string) => {
+  return crypto.createHmac("sha256", qifySecret).update(id).digest("hex");
+};
 
 const queryUserBySpotifyId = async (id: string) => {
   const expressionAttributeNames = { "#spotifyId": "spotifyId" };
@@ -35,7 +41,7 @@ export const authorize: RequestHandler = async (req, res) => {
   const { access_token, refresh_token } = codeResponse.body;
 
   // Generate ID
-  const id = uniqid();
+  const id = hashId(v4());
 
   // Request spotify profile data
   const { body } = await callSpotify(
@@ -55,7 +61,7 @@ export const authorize: RequestHandler = async (req, res) => {
     await updateTokens(user.id, access_token, refresh_token);
 
     return res.json({
-      id: user.id,
+      token: user.id,
     });
   }
 
@@ -78,6 +84,6 @@ export const authorize: RequestHandler = async (req, res) => {
   }
 
   res.json({
-    id: newUser.id,
+    token: newUser.id,
   });
 };

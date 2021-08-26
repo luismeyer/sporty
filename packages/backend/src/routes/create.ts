@@ -1,29 +1,20 @@
-import { RequestHandler } from 'express';
+import { RequestHandler } from "express";
 
-import { User } from '@qify/api';
+import { User } from "@qify/api";
 
-import { updateQueue } from '../helpers/queue';
-import { getItem, putItem } from '../services/db';
-import { callSpotify, spotify } from '../services/spotify';
-import { createStateMachine } from '../services/state-machine';
+import { updateQueue } from "../helpers/queue";
+import { authorizeRequest } from "../helpers/user";
+import { putItem } from "../services/db";
+import { callSpotify, spotify } from "../services/spotify";
+import { createStateMachine } from "../services/state-machine";
 
 export const create: RequestHandler = async (req, res) => {
-  const { id } = req.query;
-
-  if (typeof id !== "string") {
-    return res.json({
-      error: "Missing Id",
-    });
-  }
-
-  const user = await getItem<User>(id);
+  const user = await authorizeRequest(req.headers);
 
   if (!user) {
-    res.json({
-      error: "Couldn't find user",
+    return res.json({
+      error: "Wrong token",
     });
-
-    return;
   }
 
   const session = String(Math.round(Math.random() * 9000 + 1000));

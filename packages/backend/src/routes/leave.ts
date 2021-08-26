@@ -1,23 +1,14 @@
-import { RequestHandler } from 'express';
+import { RequestHandler } from "express";
 
-import { User } from '@qify/api';
-
-import { getItem, updateItem } from '../services/db';
+import { authorizeRequest } from "../helpers/user";
+import { updateItem } from "../services/db";
 
 export const leave: RequestHandler = async (req, res) => {
-  const { id } = req.query;
-
-  if (typeof id !== "string") {
-    return res.json({
-      error: "Missing Id",
-    });
-  }
-
-  const user = await getItem<User>(id);
+  const user = await authorizeRequest(req.headers);
 
   if (!user) {
     return res.json({
-      error: "Cannot find user",
+      error: "Wrong token",
     });
   }
 

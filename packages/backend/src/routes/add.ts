@@ -1,25 +1,19 @@
-import { RequestHandler } from 'express';
+import { RequestHandler } from "express";
 
-import { User } from '@qify/api';
-
-import { sessionUsers } from '../helpers/user';
-import { getItem, updateItem } from '../services/db';
-import { callSpotify, spotify } from '../services/spotify';
+import { authorizeRequest, sessionUsers } from "../helpers/user";
+import { updateItem } from "../services/db";
+import { callSpotify, spotify } from "../services/spotify";
 
 type Query = {
-  id?: string;
   songId?: string;
   force?: boolean;
 };
 
-export const add: RequestHandler<any, any, any, Query> = async (req, res) => {
-  const { id, songId, force } = req.query;
-
-  if (!id) {
-    return res.json({
-      error: "Missing id",
-    });
-  }
+export const add: RequestHandler<unknown, unknown, unknown, Query> = async (
+  req,
+  res
+) => {
+  const { songId, force } = req.query;
 
   if (!songId) {
     return res.json({
@@ -27,11 +21,11 @@ export const add: RequestHandler<any, any, any, Query> = async (req, res) => {
     });
   }
 
-  const user = await getItem<User>(id);
+  const user = await authorizeRequest(req.headers);
 
   if (!user) {
     return res.json({
-      error: "Can't find user",
+      error: "Wrong token",
     });
   }
 
@@ -61,7 +55,7 @@ export const add: RequestHandler<any, any, any, Query> = async (req, res) => {
   }
 
   // Append Item
-  await updateItem(id, {
+  await updateItem(user.id, {
     expressionAttributeNames: { "#queue": "queue" },
     expressionAttributeValues: { ":queue": [...user.queue, songId] },
     updateExpression: "SET #queue = :queue",

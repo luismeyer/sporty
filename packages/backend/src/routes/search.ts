@@ -1,12 +1,10 @@
-import { RequestHandler } from 'express';
+import { RequestHandler } from "express";
 
-import { User } from '@qify/api';
-
-import { getItem } from '../services/db';
-import { callSpotify, spotify } from '../services/spotify';
+import { transformTrack } from "../helpers/tracks";
+import { authorizeRequest } from "../helpers/user";
+import { callSpotify, spotify } from "../services/spotify";
 
 type Query = {
-  id?: string;
   query?: string;
 };
 
@@ -14,13 +12,7 @@ export const search: RequestHandler<any, any, any, Query> = async (
   req,
   res
 ) => {
-  const { id, query } = req.query;
-
-  if (!id) {
-    return res.json({
-      error: "Missing id",
-    });
-  }
+  const { query } = req.query;
 
   if (!query) {
     return res.json({
@@ -28,11 +20,11 @@ export const search: RequestHandler<any, any, any, Query> = async (
     });
   }
 
-  const user = await getItem<User>(id);
+  const user = await authorizeRequest(req.headers);
 
   if (!user) {
     return res.json({
-      error: "Couldn't find user",
+      error: "Wrong token",
     });
   }
 
@@ -45,18 +37,7 @@ export const search: RequestHandler<any, any, any, Query> = async (
   }
 
   const tracks = await Promise.all(
-    response.body.tracks.items.map(async (item) => {
-      const album = await callSpotify(user, () =>
-        spotify.getAlbum(item.album.id)
-      );
-
-      return {
-        id: item.id,
-        name: item.name,
-        artists: item.artists,
-        image: album.body.images[0],
-      };
-    })
+    response.body.tracks.items.map(transformTrack(user))
   );
 
   res.json({

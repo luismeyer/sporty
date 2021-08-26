@@ -64,6 +64,7 @@ provider:
     SPOTIFY_CLIENT_ID: ${env:SPOTIFY_CLIENT_ID, file(.env.json):SPOTIFY_CLIENT_ID}
     SPOTIFY_CLIENT_SECRET: ${env:SPOTIFY_CLIENT_SECRET, file(.env.json):SPOTIFY_CLIENT_SECRET}
     CALLBACK_URL: ${env:CALLBACK_URL, file(.env.json):CALLBACK_URL}
+    QIFY_SECRET: ${env:QIFY_SECRET, file(.env.json):QIFY_SECRET}
 
 plugins:
   - serverless-pseudo-parameters

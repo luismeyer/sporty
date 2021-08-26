@@ -1,8 +1,7 @@
-import { RequestHandler } from 'express';
+import { RequestHandler } from "express";
 
-import { User } from '@qify/api';
-
-import { getItem, updateItem } from '../services/db';
+import { authorizeRequest } from "../helpers/user";
+import { updateItem } from "../services/db";
 
 type Query = {
   id?: string;
@@ -14,13 +13,7 @@ export const remove: RequestHandler<any, any, any, Query> = async (
   req,
   res
 ) => {
-  const { id, songId } = req.query;
-
-  if (!id) {
-    return res.json({
-      error: "Missing id",
-    });
-  }
+  const { songId } = req.query;
 
   if (!songId) {
     return res.json({
@@ -28,11 +21,11 @@ export const remove: RequestHandler<any, any, any, Query> = async (
     });
   }
 
-  const user = await getItem<User>(id);
+  const user = await authorizeRequest(req.headers);
 
   if (!user) {
     return res.json({
-      error: "Can't find user",
+      error: "Wrong token",
     });
   }
 
@@ -43,7 +36,7 @@ export const remove: RequestHandler<any, any, any, Query> = async (
   }
 
   // Remove song from Queue
-  await updateItem(id, {
+  await updateItem(user.id, {
     expressionAttributeNames: { "#queue": "queue" },
     expressionAttributeValues: {
       ":queue": user.queue.filter((song) => song !== songId),
