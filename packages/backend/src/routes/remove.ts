@@ -1,5 +1,6 @@
 import { RequestHandler } from "express";
 
+import { populatedQueue } from "../helpers/queue";
 import { authorizeRequest } from "../helpers/user";
 import { updateItem } from "../services/db";
 
@@ -29,22 +30,28 @@ export const remove: RequestHandler<any, any, any, Query> = async (
     });
   }
 
+  // Dont remove the song if its not in the queue
   if (!user.queue.includes(songId)) {
     return res.json({
       error: "Song is not in Queue",
     });
   }
 
+  const newUser = {
+    ...user,
+    queue: user.queue.filter((song) => song !== songId),
+  };
+
   // Remove song from Queue
   await updateItem(user.id, {
     expressionAttributeNames: { "#queue": "queue" },
     expressionAttributeValues: {
-      ":queue": user.queue.filter((song) => song !== songId),
+      ":queue": newUser.queue,
     },
     updateExpression: "SET #queue = :queue",
   });
 
   res.json({
-    message: "Success",
+    queue: await populatedQueue(newUser),
   });
 };

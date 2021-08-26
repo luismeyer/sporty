@@ -1,5 +1,6 @@
 import { RequestHandler } from "express";
 
+import { populatedQueue } from "../helpers/queue";
 import { authorizeRequest, sessionUsers } from "../helpers/user";
 import { updateItem } from "../services/db";
 import { callSpotify, spotify } from "../services/spotify";
@@ -54,14 +55,16 @@ export const add: RequestHandler<unknown, unknown, unknown, Query> = async (
     });
   }
 
+  const updateUser = { ...user, queue: [...user.queue, songId] };
+
   // Append Item
   await updateItem(user.id, {
     expressionAttributeNames: { "#queue": "queue" },
-    expressionAttributeValues: { ":queue": [...user.queue, songId] },
+    expressionAttributeValues: { ":queue": updateUser.queue },
     updateExpression: "SET #queue = :queue",
   });
 
   res.json({
-    message: "Success",
+    queue: await populatedQueue(updateUser),
   });
 };

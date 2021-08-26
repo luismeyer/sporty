@@ -1,6 +1,9 @@
-import { updateItem } from '../services/db';
-import { callSpotify, createUri, spotify } from '../services/spotify';
-import { sessionUsers } from './user';
+import { User } from "@qify/api";
+
+import { updateItem } from "../services/db";
+import { callSpotify, createUri, spotify } from "../services/spotify";
+import { transformTrack } from "./tracks";
+import { sessionUsers } from "./user";
 
 export const updateQueue = async (session: string) => {
   const users = await sessionUsers(session);
@@ -32,5 +35,15 @@ export const updateQueue = async (session: string) => {
         updateExpression: "SET #queue = :queue",
       });
     })
+  );
+};
+
+export const populatedQueue = async (user: User) => {
+  const tracks = await Promise.all(
+    user.queue.map((track) => callSpotify(user, () => spotify.getTrack(track)))
+  );
+
+  return await Promise.all(
+    tracks.map((track) => track.body).map(transformTrack(user))
   );
 };
