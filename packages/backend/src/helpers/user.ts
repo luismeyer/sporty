@@ -1,8 +1,9 @@
 import { Request } from "express";
 
-import { User } from "@qify/api";
+import { FrontendUser, User } from "@qify/api";
 
 import { getItem, queryItems, sessionIndex, updateItem } from "../services/db";
+import { callSpotify, spotify } from "../services/spotify";
 
 export const updateTokens = async (
   id: string,
@@ -50,4 +51,23 @@ export const authorizeRequest = async (
   const [_, token] = authorization.split(" ");
 
   return getItem(token);
+};
+
+export const transformUsers = async (
+  users: User[]
+): Promise<FrontendUser[]> => {
+  const completeUsers = await Promise.all(
+    users.map(async (sessionUser) => ({
+      ...sessionUser,
+      ...(await callSpotify(sessionUser, () => spotify.getMe())),
+    }))
+  );
+
+  return completeUsers.map((cUser) => ({
+    name: cUser.body.display_name ?? cUser.body.id,
+    image: cUser.body.images?.[0].url,
+    isOwner: cUser.isOwner,
+    isPlayer: cUser.isPlayer,
+    tracksInQueue: cUser.queue.length,
+  }));
 };

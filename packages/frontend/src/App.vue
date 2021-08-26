@@ -1,32 +1,39 @@
 <template>
   <div>
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
-    </div>
     <router-view />
+    <Footer />
   </div>
 </template>
+
+<script lang="ts">
+import { defineComponent } from "vue";
+
+import Footer from "./components/Footer.vue";
+
+export default defineComponent({
+  components: {
+    Footer,
+  },
+});
+</script>
 
 <style>
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
+  color: white;
 }
 
-#nav {
-  padding: 30px;
+html {
+  background: linear-gradient(#2b2b2b, black) no-repeat fixed;
 }
 
-#nav a {
-  font-weight: bold;
-  color: #2c3e50;
+h1 {
+  margin: 16px 0;
 }
 
-#nav a.router-link-exact-active {
-  color: #42b983;
+* {
+  box-sizing: border-box;
 }
 </style>

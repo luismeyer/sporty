@@ -21,6 +21,11 @@ custom:
   jetpack:
     preInclude:
       - "!**"
+  client:
+    bucketName: qify-${self:custom.stage}-frontend
+    distributionFolder: packages/frontend/dist
+    indexDocument: index.html
+    errorDocument: index.html
 
 provider:
   name: aws
@@ -63,10 +68,11 @@ provider:
     STATE_MACHINE_ROLE_ARN: ${self:custom.stateMachineRole.arn}
     SPOTIFY_CLIENT_ID: ${env:SPOTIFY_CLIENT_ID, file(.env.json):SPOTIFY_CLIENT_ID}
     SPOTIFY_CLIENT_SECRET: ${env:SPOTIFY_CLIENT_SECRET, file(.env.json):SPOTIFY_CLIENT_SECRET}
-    CALLBACK_URL: ${env:CALLBACK_URL, file(.env.json):CALLBACK_URL}
+    FRONTEND_URL: ${env:FRONTEND_URL, file(.env.json):FRONTEND_URL}
     QIFY_SECRET: ${env:QIFY_SECRET, file(.env.json):QIFY_SECRET}
 
 plugins:
+  - serverless-finch
   - serverless-pseudo-parameters
   - serverless-jetpack
   - serverless-offline
@@ -79,10 +85,10 @@ functions:
     handler: packages/backend/dist/handler.handler
     events:
       - httpApi:
-          path: /
+          path: /api
           method: "*"
       - httpApi:
-          path: /{proxy+}
+          path: /api/{proxy+}
           method: "*"
     package:
       include:
@@ -161,4 +167,26 @@ resources:
                   Action:
                     - "lambda:InvokeFunction"
                   Resource: "*"
+                  
+    FrontendProxyRoute:
+      Type: AWS::ApiGatewayV2::Route
+      Properties: 
+        ApiId: 
+          Ref: HttpApi
+        RouteKey: ANY /{proxy+}
+        Target:
+          Fn::Join: 
+            - "/"
+            - - integrations
+              - Ref: FrontendProxyIntegration
 
+    FrontendProxyIntegration:   
+      Type: AWS::ApiGatewayV2::Integration
+      Properties: 
+        ApiId: 
+          Ref: HttpApi
+        IntegrationMethod: ANY
+        IntegrationType: HTTP_PROXY
+        IntegrationUri: http://${self:custom.client.bucketName}.s3-website.eu-central-1.amazonaws.com/{proxy}
+        PassthroughBehavior: WHEN_NO_MATCH
+        PayloadFormatVersion: '1.0'

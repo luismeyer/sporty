@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { RequestHandler } from "express";
 import { v4 } from "uuid";
 
-import { User } from "@qify/api";
+import { AuthorizeResponse, User } from "@qify/api";
 
 import { qifySecret } from "../helpers/const";
 import { updateTokens } from "../helpers/user";
@@ -24,10 +24,20 @@ const queryUserBySpotifyId = async (id: string) => {
   });
 };
 
-export const authorize: RequestHandler = async (req, res) => {
+type Query = {
+  code?: string;
+};
+
+export const authorize: RequestHandler<
+  unknown,
+  AuthorizeResponse,
+  unknown,
+  Query
+> = async (req, res) => {
   const { code } = req.query;
 
-  if (typeof code !== "string") {
+  if (!code) {
+    res.json({ success: false, error: "Missing code" });
     return;
   }
 
@@ -35,7 +45,7 @@ export const authorize: RequestHandler = async (req, res) => {
   const codeResponse = await codeGrant(code);
 
   if (!codeResponse || !codeResponse.body.access_token) {
-    return res.json(codeResponse);
+    return res.json({ success: false, error: "Couldn't login" });
   }
 
   const { access_token, refresh_token } = codeResponse.body;
@@ -60,9 +70,7 @@ export const authorize: RequestHandler = async (req, res) => {
   if (user) {
     await updateTokens(user.id, access_token, refresh_token);
 
-    return res.json({
-      token: user.id,
-    });
+    return res.json({ success: true, body: { token: user.id } });
   }
 
   // Insert new user in DB
@@ -71,12 +79,14 @@ export const authorize: RequestHandler = async (req, res) => {
     spotifyId: body.id,
     accessToken: access_token,
     refreshToken: refresh_token,
+    isPlayer: false,
     queue: [],
   });
 
   // Return if DB injection went wrong
   if (!newUser) {
     res.json({
+      success: false,
       error: "Coulnd't create user",
     });
 
@@ -84,6 +94,9 @@ export const authorize: RequestHandler = async (req, res) => {
   }
 
   res.json({
-    token: newUser.id,
+    success: true,
+    body: {
+      token: newUser.id,
+    },
   });
 };

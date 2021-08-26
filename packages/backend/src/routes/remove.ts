@@ -1,5 +1,7 @@
 import { RequestHandler } from "express";
 
+import { QueueResponse } from "@qify/api";
+
 import { populatedQueue } from "../helpers/queue";
 import { authorizeRequest } from "../helpers/user";
 import { updateItem } from "../services/db";
@@ -10,7 +12,7 @@ type Query = {
   force?: boolean;
 };
 
-export const remove: RequestHandler<any, any, any, Query> = async (
+export const remove: RequestHandler<any, QueueResponse, any, Query> = async (
   req,
   res
 ) => {
@@ -18,6 +20,7 @@ export const remove: RequestHandler<any, any, any, Query> = async (
 
   if (!songId) {
     return res.json({
+      success: false,
       error: "Missing songId",
     });
   }
@@ -26,6 +29,7 @@ export const remove: RequestHandler<any, any, any, Query> = async (
 
   if (!user) {
     return res.json({
+      success: false,
       error: "Wrong token",
     });
   }
@@ -33,6 +37,7 @@ export const remove: RequestHandler<any, any, any, Query> = async (
   // Dont remove the song if its not in the queue
   if (!user.queue.includes(songId)) {
     return res.json({
+      success: false,
       error: "Song is not in Queue",
     });
   }
@@ -45,13 +50,14 @@ export const remove: RequestHandler<any, any, any, Query> = async (
   // Remove song from Queue
   await updateItem(user.id, {
     expressionAttributeNames: { "#queue": "queue" },
-    expressionAttributeValues: {
-      ":queue": newUser.queue,
-    },
+    expressionAttributeValues: { ":queue": newUser.queue },
     updateExpression: "SET #queue = :queue",
   });
 
   res.json({
-    queue: await populatedQueue(newUser),
+    success: true,
+    body: {
+      queue: await populatedQueue(newUser),
+    },
   });
 };

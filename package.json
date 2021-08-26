@@ -14,7 +14,7 @@
     ]
   },
   "scripts": {
-    "start": "sls offline start",
+    "start": "concurrently -c blue,red 'lerna run --parallel start' 'sls offline start'",
     "watch": "lerna run --parallel watch",
     "build": "lerna run --parallel build",
     "db:install": "sls dynamodb install"
@@ -22,6 +22,7 @@
   "devDependencies": {
     "concurrently": "^6.2.1",
     "lerna": "^4.0.0",
+    "serverless-finch": "^2.6.0",
     "serverless-jetpack": "^0.11.1",
     "serverless-offline": "^8.0.0",
     "serverless-pseudo-parameters": "^2.6.0"

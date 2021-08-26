@@ -1,15 +1,15 @@
-import SpotifyWebApi from 'spotify-web-api-node';
+import SpotifyWebApi from "spotify-web-api-node";
 
-import { User } from '@qify/api';
+import { User } from "@qify/api";
 
-import { spotifyClientId, spotifyClientSecret } from '../helpers/const';
-import { updateTokens } from '../helpers/user';
+import {
+  frontendUrl,
+  spotifyClientId,
+  spotifyClientSecret,
+} from "../helpers/const";
+import { updateTokens } from "../helpers/user";
 
-const { CALLBACK_URL, IS_OFFLINE } = process.env;
-
-const redirectUri = IS_OFFLINE
-  ? "http://localhost:3000/authorize"
-  : CALLBACK_URL;
+const redirectUri = frontendUrl + "/callback";
 
 if (!redirectUri) {
   throw new Error("Missing redirect URI");

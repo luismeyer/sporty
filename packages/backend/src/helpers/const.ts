@@ -5,6 +5,8 @@ const {
   STATE_MACHINE_ROLE_ARN,
   QUEUE_LAMBDA_ARN,
   QIFY_SECRET,
+  FRONTEND_URL,
+  IS_OFFLINE,
 } = process.env;
 
 if (!SPOTIFY_CLIENT_ID) {
@@ -31,6 +33,10 @@ if (!QIFY_SECRET) {
   throw new Error("Missing Env Var: 'QIFY_SECRET'");
 }
 
+if (!FRONTEND_URL) {
+  throw new Error("Missing Env Var: 'FRONTEND_URL'");
+}
+
 export const ddbTable = DDB_TABLE;
 
 export const spotifyClientId = SPOTIFY_CLIENT_ID;
@@ -44,3 +50,5 @@ export const qifySecret = QIFY_SECRET;
 export const spotifyBasicHeader = `Basic ${Buffer.from(
   `${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`
 ).toString("base64")}`;
+
+export const frontendUrl = IS_OFFLINE ? "http://localhost:8080" : FRONTEND_URL;

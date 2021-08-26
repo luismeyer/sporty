@@ -1,19 +1,31 @@
 import { RequestHandler } from "express";
 
-import { User } from "@qify/api";
+import { SessionResponse, User } from "@qify/api";
 
 import { updateQueue } from "../helpers/queue";
 import { authorizeRequest } from "../helpers/user";
 import { putItem } from "../services/db";
 import { callSpotify, spotify } from "../services/spotify";
 import { createStateMachine } from "../services/state-machine";
+import { transformSession } from "../helpers/session";
 
-export const create: RequestHandler = async (req, res) => {
+export const create: RequestHandler<unknown, SessionResponse> = async (
+  req,
+  res
+) => {
   const user = await authorizeRequest(req.headers);
 
   if (!user) {
     return res.json({
+      success: false,
       error: "Wrong token",
+    });
+  }
+
+  if (user.session) {
+    return res.json({
+      success: false,
+      error: "Already in Session",
     });
   }
 
@@ -51,6 +63,7 @@ export const create: RequestHandler = async (req, res) => {
   await createStateMachine(session, timeInMS);
 
   res.json({
-    session,
+    success: true,
+    body: await transformSession(session, []),
   });
 };

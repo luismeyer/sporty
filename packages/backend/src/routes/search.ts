@@ -1,5 +1,7 @@
 import { RequestHandler } from "express";
 
+import { SearchResponse } from "@qify/api";
+
 import { transformTrack } from "../helpers/tracks";
 import { authorizeRequest } from "../helpers/user";
 import { callSpotify, spotify } from "../services/spotify";
@@ -8,7 +10,7 @@ type Query = {
   query?: string;
 };
 
-export const search: RequestHandler<any, any, any, Query> = async (
+export const search: RequestHandler<unknown, SearchResponse, unknown, Query> = async (
   req,
   res
 ) => {
@@ -16,6 +18,7 @@ export const search: RequestHandler<any, any, any, Query> = async (
 
   if (!query) {
     return res.json({
+      success: false,
       error: "Missing query",
     });
   }
@@ -24,6 +27,7 @@ export const search: RequestHandler<any, any, any, Query> = async (
 
   if (!user) {
     return res.json({
+      success: false,
       error: "Wrong token",
     });
   }
@@ -32,6 +36,7 @@ export const search: RequestHandler<any, any, any, Query> = async (
 
   if (!response.body.tracks) {
     return res.json({
+      success: false,
       error: "Couldn't find song",
     });
   }
@@ -41,6 +46,9 @@ export const search: RequestHandler<any, any, any, Query> = async (
   );
 
   res.json({
-    tracks,
+    success: true,
+    body: {
+      tracks,
+    },
   });
 };

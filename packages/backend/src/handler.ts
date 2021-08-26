@@ -7,6 +7,8 @@ import { sessionUsers } from "./helpers/user";
 import { add } from "./routes/add";
 import { authorize } from "./routes/authorize";
 import { create } from "./routes/create";
+import { get } from "./routes/get";
+import { join } from "./routes/join";
 import { leave } from "./routes/leave";
 import { login } from "./routes/login";
 import { queue } from "./routes/queue";
@@ -20,20 +22,23 @@ import {
 } from "./services/state-machine";
 
 const app = express();
+const baseUrl = "/api";
 
 app.use(express.json());
 
-app.get("/login", login);
-app.get("/authorize", authorize);
+app.get(`${baseUrl}/login`, login);
+app.get(`${baseUrl}/authorize`, authorize);
 
-app.get("/create", create);
-app.get("/leave", leave);
+app.get(`${baseUrl}/join`, join);
+app.get(`${baseUrl}/get`, get);
+app.get(`${baseUrl}/create`, create);
+app.get(`${baseUrl}/leave`, leave);
 
-app.get("/add", add);
-app.get("/remove", remove);
+app.get(`${baseUrl}/add`, add);
+app.get(`${baseUrl}/remove`, remove);
 
-app.get("/search", search);
-app.get("/queue", queue);
+app.get(`${baseUrl}/search`, search);
+app.get(`${baseUrl}/queue`, queue);
 
 app.use((_req, res, _next) => {
   return res.status(404).json({
