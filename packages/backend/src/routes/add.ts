@@ -49,6 +49,7 @@ export const add: RequestHandler<any, any, any, Query> = async (req, res) => {
     });
   }
 
+  // Validate that the Song Id is correct
   const track = await callSpotify(user, () => spotify.getTrack(songId)).catch(
     () => undefined
   );
@@ -62,9 +63,7 @@ export const add: RequestHandler<any, any, any, Query> = async (req, res) => {
   // Append Item
   await updateItem(id, {
     expressionAttributeNames: { "#queue": "queue" },
-    expressionAttributeValues: {
-      ":queue": [...user.queue, songId],
-    },
+    expressionAttributeValues: { ":queue": [...user.queue, songId] },
     updateExpression: "SET #queue = :queue",
   });
 

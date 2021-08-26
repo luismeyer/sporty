@@ -64,3 +64,5 @@ export const callSpotify = async <T>(
     return fc();
   });
 };
+
+export const createUri = (id: string) => `spotify:track:${id}`;

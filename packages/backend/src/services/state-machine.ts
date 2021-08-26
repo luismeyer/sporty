@@ -5,8 +5,10 @@ import { timer } from "../helpers/timer";
 
 const stepFunctions = new AWS.StepFunctions({ region: "eu-central-1" });
 
-const definition = (timeInMS: number) =>
-  JSON.stringify({
+const definition = (timeInMS: number) => {
+  const Seconds = Math.floor(timeInMS / 1000);
+
+  return JSON.stringify({
     Comment: "State Machine for qify",
     StartAt: "Wait",
     States: {
@@ -14,7 +16,7 @@ const definition = (timeInMS: number) =>
         Comment:
           "A Wait state delays the state machine from continuing for a specified time.",
         Type: "Wait",
-        Seconds: Math.floor(timeInMS / 1000) - 10,
+        Seconds: Seconds > 0 ? Seconds : 5,
         Next: "Invoke",
       },
       Invoke: {
@@ -31,6 +33,7 @@ const definition = (timeInMS: number) =>
       },
     },
   });
+};
 
 const createStateMachineName = (session: string) => session + "stepfc";
 
