@@ -1,9 +1,9 @@
-import SpotifyWebApi from "spotify-web-api-node";
+import SpotifyWebApi from 'spotify-web-api-node';
 
-import { User } from "@qify/api";
+import { User } from '@qify/api';
 
-import { spotifyClientId, spotifyClientSecret } from "../helpers/const";
-import { updateTokens } from "../helpers/user";
+import { spotifyClientId, spotifyClientSecret } from '../helpers/const';
+import { updateTokens } from '../helpers/user';
 
 const { CALLBACK_URL, IS_OFFLINE } = process.env;
 

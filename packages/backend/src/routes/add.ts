@@ -1,10 +1,10 @@
-import { RequestHandler } from "express";
+import { RequestHandler } from 'express';
 
-import { User } from "@qify/api";
+import { User } from '@qify/api';
 
-import { getItem, updateItem } from "../services/db";
-import { sessionUsers } from "../helpers/user";
-import { callSpotify, spotify } from "../services/spotify";
+import { sessionUsers } from '../helpers/user';
+import { getItem, updateItem } from '../services/db';
+import { callSpotify, spotify } from '../services/spotify';
 
 type Query = {
   id?: string;

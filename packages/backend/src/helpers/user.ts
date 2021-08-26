@@ -1,6 +1,6 @@
-import { User } from "@qify/api";
+import { User } from '@qify/api';
 
-import { queryItems, sessionIndex, updateItem } from "../services/db";
+import { queryItems, sessionIndex, updateItem } from '../services/db';
 
 export const updateTokens = async (
   id: string,

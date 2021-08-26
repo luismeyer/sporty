@@ -1,8 +1,8 @@
-import { RequestHandler } from "express";
+import { RequestHandler } from 'express';
 
-import { User } from "@qify/api";
+import { User } from '@qify/api';
 
-import { getItem, updateItem } from "../services/db";
+import { getItem, updateItem } from '../services/db';
 
 type Query = {
   id?: string;

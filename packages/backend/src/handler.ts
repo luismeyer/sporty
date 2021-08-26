@@ -1,22 +1,18 @@
-import { Handler } from "aws-lambda";
-import express from "express";
-import serverless from "serverless-http";
+import { Handler } from 'aws-lambda';
+import express from 'express';
+import serverless from 'serverless-http';
 
-import { updateQueue } from "./helpers/queue";
-import { sessionUsers } from "./helpers/user";
-import { add } from "./routes/add";
-import { authorize } from "./routes/authorize";
-import { create } from "./routes/create";
-import { leave } from "./routes/leave";
-import { login } from "./routes/login";
-import { remove } from "./routes/remove";
-import { search } from "./routes/search";
-import { callSpotify, spotify } from "./services/spotify";
-import {
-  deleteStateMachine,
-  stateMachineArn,
-  updateStateMachine,
-} from "./services/state-machine";
+import { updateQueue } from './helpers/queue';
+import { sessionUsers } from './helpers/user';
+import { add } from './routes/add';
+import { authorize } from './routes/authorize';
+import { create } from './routes/create';
+import { leave } from './routes/leave';
+import { login } from './routes/login';
+import { remove } from './routes/remove';
+import { search } from './routes/search';
+import { callSpotify, spotify } from './services/spotify';
+import { deleteStateMachine, stateMachineArn, updateStateMachine } from './services/state-machine';
 
 const app = express();
 

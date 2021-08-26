@@ -1,6 +1,6 @@
-import { updateItem } from "../services/db";
-import { callSpotify, createUri, spotify } from "../services/spotify";
-import { sessionUsers } from "./user";
+import { updateItem } from '../services/db';
+import { callSpotify, createUri, spotify } from '../services/spotify';
+import { sessionUsers } from './user';
 
 export const updateQueue = async (session: string) => {
   const users = await sessionUsers(session);

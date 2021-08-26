@@ -1,6 +1,6 @@
-import AWS from "aws-sdk";
+import AWS from 'aws-sdk';
 
-import { ddbTable } from "../helpers/const";
+import { ddbTable } from '../helpers/const';
 
 const { SPOTIFY_ID_INDEX, SESSION_INDEX } = process.env;
 
