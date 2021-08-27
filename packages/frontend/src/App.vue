@@ -25,6 +25,10 @@ export default defineComponent({
   color: white;
 }
 
+a {
+  color: #2efff5;
+}
+
 html {
   background: linear-gradient(#2b2b2b, black) no-repeat fixed;
 }

@@ -2,13 +2,22 @@
   <div>
     <div class="headline">
       <h1>Session</h1>
-      <router-link
-        class="link"
-        to="/settings"
-        v-if="!loading && sessionState.session"
-      >
-        Settings
-      </router-link>
+      <div class="links">
+        <router-link
+          class="link"
+          to="/settings"
+          v-if="!loading && sessionState.session"
+        >
+          Settings
+        </router-link>
+        <router-link
+          class="link"
+          to="/share"
+          v-if="!loading && sessionState.session"
+        >
+          Share with friends
+        </router-link>
+      </div>
     </div>
 
     <span v-if="loading">loading...</span>
@@ -88,17 +97,12 @@ export default defineComponent({
 <style scoped>
 h1 {
   text-align: center;
-  margin-bottom: 0;
-}
-
-a {
-  color: blue;
+  margin-bottom: 8px;
 }
 
 .headline {
   display: grid;
-  align-items: center;
-  justify-items: center;
+  justify-content: center;
   margin-bottom: 16px;
 }
 
@@ -116,5 +120,11 @@ ul {
   justify-items: start;
   padding: 0;
   list-style: none;
+}
+
+.links {
+  display: grid;
+  grid-auto-flow: column;
+  grid-gap: 8px;
 }
 </style>

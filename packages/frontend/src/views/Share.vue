@@ -1,19 +1,15 @@
 <template>
   <div>
     <div class="headline">
-      <h1>Session Settings</h1>
+      <h1>Share this Session</h1>
       <router-link to="/"> Back </router-link>
     </div>
 
     <span v-if="loading">loading...</span>
 
-    <div v-else>
-      <div class="setting">
-        <label>Leave session</label>
-        <button v-if="sessionState.session" class="leave" @click="handleLeave">
-          leave
-        </button>
-      </div>
+    <div v-else class="share">
+      <img :src="sessionState.session.qrCode" alt="QR code to join" />
+      <a :href="sessionState.session.url">share this link with your friends</a>
     </div>
   </div>
 </template>
@@ -42,14 +38,6 @@ export default defineComponent({
 
     this.loading = false;
   },
-  methods: {
-    async handleLeave() {
-      this.loading = true;
-      await sessionStore.leave();
-
-      this.$router.push({ name: "Session" });
-    },
-  },
 });
 </script>
 
@@ -66,7 +54,12 @@ h1 {
   margin-bottom: 16px;
 }
 
-.setting {
-  display: grid;
+img {
+  width: 100%;
+}
+
+.share {
+  width: 80%;
+  margin: 64px auto 0;
 }
 </style>

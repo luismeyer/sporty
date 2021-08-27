@@ -7,6 +7,7 @@ import Login from "../views/Login.vue";
 import Callback from "../views/Callback.vue";
 import Search from "../views/Search.vue";
 import Join from "../views/Join.vue";
+import Share from "../views/Share.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -19,7 +20,11 @@ const routes: Array<RouteRecordRaw> = [
     name: "Settings",
     component: Settings,
   },
-
+  {
+    path: "/share",
+    name: "Share",
+    component: Share,
+  },
   {
     path: "/queue",
     name: "Queue",
