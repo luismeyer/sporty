@@ -1,14 +1,14 @@
 import { reactive } from "vue";
 
-import { QueueResponse, Track } from "@qify/api";
+import { Queue, QueueResponse } from "@qify/api";
 
 import { fetchApi } from "../api";
 
 export const storageKey = "qify-token";
 
-type QueueStore = {
+export type QueueStore = {
   state: {
-    queue?: Track[];
+    queue?: Queue;
   };
   fetch: () => Promise<void>;
   addSong: (id: string) => Promise<void>;
@@ -27,17 +27,19 @@ export const queueStore: QueueStore = {
     }
   },
   async addSong(id: string) {
-    const response = await fetchApi<QueueResponse>("add", `songId=${id}`);
+    const response = await fetchApi<QueueResponse>("queue/add", `songId=${id}`);
 
     if (response.success) {
       this.state.queue = response.body.queue;
     }
   },
   async removeSong(id: string) {
-    const response = await fetchApi<QueueResponse>("remove", `songId=${id}`);
+    const response = await fetchApi<QueueResponse>(
+      "queue/remove",
+      `songId=${id}`
+    );
 
     if (response.success) {
-      console.log(response.body);
       this.state.queue = response.body.queue;
     }
   },

@@ -36,6 +36,7 @@ export default defineComponent({
   components: {
     Track,
   },
+
   data() {
     return {
       auth: authStore.state,
@@ -44,6 +45,7 @@ export default defineComponent({
       isLoading: false,
     };
   },
+
   mounted() {
     if (!this.auth.isAuthenticated) {
       this.$router.push({ name: "Login" });
@@ -55,6 +57,7 @@ export default defineComponent({
 
     input.focus();
   },
+
   watch: {
     async query() {
       if (this.query.length <= 3) {
@@ -72,6 +75,7 @@ export default defineComponent({
       }, 1000);
     },
   },
+
   methods: {
     async handleSubmit() {
       if (this.isLoading) {
@@ -80,9 +84,11 @@ export default defineComponent({
 
       await this.fetchSearch();
     },
+
     async add(id: string) {
       await queueStore.addSong(id);
     },
+
     async fetchSearch() {
       this.isLoading = true;
       const result = await fetchApi<SearchResponse>(
@@ -124,6 +130,8 @@ input {
 ul {
   list-style: none;
   margin-bottom: 0;
-  padding: 0 0 80px 0;
+  padding: 0;
+  display: grid;
+  grid-gap: 24px;
 }
 </style>

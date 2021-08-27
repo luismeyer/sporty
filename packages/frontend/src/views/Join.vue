@@ -1,5 +1,7 @@
 <template>
-  <div>joining session</div>
+  <div class="container">
+    <h1>joining session...</h1>
+  </div>
 </template>
 
 <script lang="ts">
@@ -34,3 +36,15 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scoped>
+.container {
+  position: absolute;
+  margin: auto;
+  left: 0;
+  top: 40%;
+  text-align: center;
+  width: 100%;
+  padding: 0 12px;
+}
+</style>

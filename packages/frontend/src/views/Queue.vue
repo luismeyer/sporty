@@ -1,19 +1,21 @@
 <template>
   <div>
+    <Reload :disabled="refreshLoading || loading" :onClick="refreshQueue" />
+
     <h1>Your Q</h1>
 
     <div v-if="loading">loading...</div>
+
     <ul v-else>
       <Track
-        :track="track"
-        :key="track.id"
-        v-for="track in queueState.queue"
-        v-bind:action="remove"
+        v-for="item in queueState.queue"
+        :action="userState.user.name === item.user.name ? remove : undefined"
+        :track="item.track"
+        :user="item.user"
+        :key="item.id"
         icon-name="remove"
       />
     </ul>
-
-    <Fab :disabled="refreshLoading || loading" :onClick="refreshQueue" />
   </div>
 </template>
 
@@ -21,42 +23,53 @@
 import { defineComponent } from "vue";
 
 import { authStore } from "../stores/auth";
-import { queueStore } from "../stores/queue";
+import { QueueStore, queueStore } from "../stores/queue";
 
 import Track from "../components/Track.vue";
-import Fab from "../components/Fab.vue";
+import Reload from "../components/Reload.vue";
+import { UserStore, userStore } from "../stores/user";
 
 export default defineComponent({
   components: {
     Track,
-    Fab,
+    Reload,
   },
+
   data() {
     return {
-      authState: authStore.state,
       queueState: queueStore.state,
-      loading: !queueStore.state.queue,
+      userState: userStore.state,
       refreshLoading: false,
     };
   },
+
+  computed: {
+    loading() {
+      const queueState = this.queueState as QueueStore["state"];
+      const userState = this.userState as UserStore["state"];
+
+      return !queueState.queue || (userState.loading && !userState.user);
+    },
+  },
+
   methods: {
     async remove(id: string) {
       await queueStore.removeSong(id);
     },
+
     async refreshQueue() {
       this.refreshLoading = true;
       await queueStore.fetch();
       this.refreshLoading = false;
     },
   },
+
   async mounted() {
-    if (!this.authState.isAuthenticated) {
+    if (!authStore.state.isAuthenticated) {
       this.$router.push({ name: "Login" });
     }
 
-    await this.refreshQueue();
-
-    this.loading = false;
+    await Promise.all([this.refreshQueue(), userStore.fetch()]);
   },
 });
 </script>
@@ -68,7 +81,7 @@ h1 {
 
 ul {
   display: grid;
-  grid-gap: 12px;
+  grid-gap: 24px;
   justify-items: start;
   padding: 0;
   list-style: none;

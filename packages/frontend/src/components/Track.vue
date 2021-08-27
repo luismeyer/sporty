@@ -1,13 +1,29 @@
 <template>
-  <li class="track" v-bind:class="[{ addLoading: loading }]">
-    <img :src="track.image.url" alt="Spotify Preview Image" />
+  <li
+    @click="handleClick"
+    class="track"
+    v-bind:class="[{ addLoading: loading }]"
+  >
+    <img
+      class="song-image"
+      :src="track.image.url"
+      alt="Spotify Preview Image"
+    />
     <div class="info">
-      <span class="name">{{ track.name }}</span>
+      <div class="caption">
+        <span class="name">{{ track.name }}</span>
+        <img
+          class="user-image"
+          v-if="user"
+          :src="user.image"
+          alt="User profile image"
+        />
+      </div>
       <span class="artists">{{ track.artists.join(", ") }}</span>
     </div>
 
     <div class="action">
-      <button @click="handleClick(track.id)">
+      <button v-if="action" @click="handleClick">
         <svg
           v-if="iconName === 'remove'"
           fill="white"
@@ -35,17 +51,17 @@
 </template>
 
 <script lang="ts">
-import { Track } from "@qify/api";
+import { FrontendUser, Track } from "@qify/api";
 import { defineComponent, PropType } from "vue";
+
+type ActionType = (id: string) => Promise<void>;
 
 export default defineComponent({
   props: {
     track: Object as PropType<Track>,
+    user: Object as PropType<FrontendUser>,
     iconName: String as PropType<"add" | "remove">,
-    action: {
-      required: true,
-      type: Function as PropType<(id: string) => Promise<void>>,
-    },
+    action: Function as PropType<ActionType>,
   },
   data() {
     return {
@@ -53,9 +69,13 @@ export default defineComponent({
     };
   },
   methods: {
-    async handleClick(id: string) {
+    async handleClick() {
+      if (!this.action || !this.track) {
+        return;
+      }
+
       this.loading = true;
-      await this.action(id);
+      await this.action(this.track.id);
       this.loading = false;
     },
   },
@@ -68,7 +88,6 @@ export default defineComponent({
   justify-items: start;
   grid-template-columns: auto 1fr auto;
   grid-gap: 12px;
-  padding: 10px 16px;
   border-radius: 8px;
   color: white;
   transition: opacity 0.2s ease;
@@ -99,8 +118,23 @@ button {
   border: none;
 }
 
-img {
+.song-image {
   width: 60px;
+}
+
+.caption {
+  display: grid;
+  align-items: center;
+  grid-template-columns: auto 1fr;
+  width: 100%;
+  grid-gap: 12px;
+}
+
+.user-image {
+  width: 20px;
+  height: 20px;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .addLoading {

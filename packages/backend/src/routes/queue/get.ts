@@ -2,10 +2,10 @@ import { RequestHandler } from "express";
 
 import { QueueResponse } from "@qify/api";
 
-import { populatedQueue } from "../helpers/queue";
-import { authorizeRequest } from "../helpers/user";
+import { generateQueue } from "../../helpers/queue";
+import { authorizeRequest } from "../../helpers/user";
 
-export const queue: RequestHandler<unknown, QueueResponse> = async (
+export const getQueue: RequestHandler<unknown, QueueResponse> = async (
   req,
   res
 ) => {
@@ -21,7 +21,7 @@ export const queue: RequestHandler<unknown, QueueResponse> = async (
   res.json({
     success: true,
     body: {
-      queue: await populatedQueue(user),
+      queue: await generateQueue(user),
     },
   });
 };

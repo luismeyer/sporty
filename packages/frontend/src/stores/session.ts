@@ -4,59 +4,70 @@ import { MessageResponse, Session, SessionResponse } from "@qify/api";
 
 import { fetchApi } from "../api";
 
-type SessionStore = {
+export type SessionStore = {
   state: {
-    hasData: boolean;
+    loading: boolean;
     session?: Session;
   };
   fetch: () => Promise<void>;
   create: () => Promise<void>;
   leave: () => Promise<void>;
   join: (session: string) => Promise<void>;
+  hasData: () => boolean;
 };
 
 export const sessionStore: SessionStore = {
   state: reactive({
-    hasData: false,
-    users: [],
+    loading: false,
   }),
+  hasData() {
+    return Boolean(this.state.session && !this.state.loading);
+  },
   async fetch() {
-    const response = await fetchApi<SessionResponse>("get");
+    this.state.loading = true;
+    const response = await fetchApi<SessionResponse>("session");
 
     if (response.success) {
       this.state.session = response.body;
-      this.state.hasData = true;
     }
+
+    this.state.loading = false;
   },
   async create() {
-    const response = await fetchApi<SessionResponse>("create");
+    this.state.loading = true;
+    const response = await fetchApi<SessionResponse>("session/create");
 
     if (response.success) {
       this.state.session = response.body;
-      this.state.hasData = true;
     }
+
+    this.state.loading = false;
   },
   async leave() {
+    this.state.loading = true;
     if (!this.state.session) {
       return;
     }
 
-    const response = await fetchApi<MessageResponse>("leave");
+    const response = await fetchApi<MessageResponse>("session/leave");
 
     if (response.success) {
       this.state.session = undefined;
-      this.state.hasData = true;
     }
+
+    this.state.loading = false;
   },
   async join(session: string) {
+    this.state.loading = true;
     const response = await fetchApi<SessionResponse>(
-      "join",
+      "session/join",
       `session=${session}`
     );
 
     if (response.success) {
       this.state.session = response.body;
-      this.state.hasData = true;
     }
+
+    this.state.loading = false;
   },
 };

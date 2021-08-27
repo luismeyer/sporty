@@ -1,17 +1,17 @@
 import { RequestHandler } from "express";
-import { QueueResponse } from "../../../api/dist";
+import { QueueResponse } from "../../../../api/dist";
 
-import { populatedQueue } from "../helpers/queue";
-import { authorizeRequest, sessionUsers } from "../helpers/user";
-import { updateItem } from "../services/db";
-import { callSpotify, spotify } from "../services/spotify";
+import { generateQueue } from "../../helpers/queue";
+import { authorizeRequest, sessionUsers } from "../../helpers/user";
+import { updateItem } from "../../services/db";
+import { callSpotify, spotify } from "../../services/spotify";
 
 type Query = {
   songId?: string;
   force?: boolean;
 };
 
-export const add: RequestHandler<unknown, QueueResponse, unknown, Query> =
+export const addSong: RequestHandler<unknown, QueueResponse, unknown, Query> =
   async (req, res) => {
     const { songId, force } = req.query;
 
@@ -70,7 +70,7 @@ export const add: RequestHandler<unknown, QueueResponse, unknown, Query> =
     res.json({
       success: true,
       body: {
-        queue: await populatedQueue(updateUser),
+        queue: await generateQueue(user),
       },
     });
   };

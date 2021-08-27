@@ -69,15 +69,13 @@ li {
   grid-auto-flow: column;
   grid-template-columns: auto 1fr auto;
   grid-gap: 12px;
-  padding: 10px 16px;
 }
 
 .user {
   display: grid;
-  grid-auto-flow: column;
+  grid-template-columns: auto 1fr;
   font-size: 20px;
   align-items: center;
-  width: min-content;
   grid-gap: 8px;
 }
 

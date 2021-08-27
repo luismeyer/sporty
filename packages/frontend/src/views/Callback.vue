@@ -1,5 +1,7 @@
 <template>
-  <div>login is loading please wait...</div>
+  <div class="container">
+    <h1>login is loading...</h1>
+  </div>
 </template>
 
 <script lang="ts">
@@ -29,3 +31,15 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scoped>
+.container {
+  position: absolute;
+  margin: auto;
+  left: 0;
+  top: 40%;
+  text-align: center;
+  width: 100%;
+  padding: 0 12px;
+}
+</style>

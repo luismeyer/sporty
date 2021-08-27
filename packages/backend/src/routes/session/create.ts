@@ -2,14 +2,14 @@ import { RequestHandler } from "express";
 
 import { SessionResponse, User } from "@qify/api";
 
-import { updateQueue } from "../helpers/queue";
-import { authorizeRequest } from "../helpers/user";
-import { putItem } from "../services/db";
-import { callSpotify, spotify } from "../services/spotify";
-import { createStateMachine } from "../services/state-machine";
-import { transformSession } from "../helpers/session";
+import { updateQueue } from "../../helpers/queue";
+import { authorizeRequest } from "../../helpers/user";
+import { putItem } from "../../services/db";
+import { callSpotify, spotify } from "../../services/spotify";
+import { createStateMachine } from "../../services/state-machine";
+import { transformSession } from "../../helpers/session";
 
-export const create: RequestHandler<unknown, SessionResponse> = async (
+export const createSession: RequestHandler<unknown, SessionResponse> = async (
   req,
   res
 ) => {

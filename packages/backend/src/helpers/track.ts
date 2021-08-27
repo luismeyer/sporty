@@ -3,8 +3,7 @@ import { Track, User } from "@qify/api";
 import { callSpotify, spotify } from "../services/spotify";
 
 export const transformTrack =
-  (user: User) =>
-  async (track: SpotifyApi.TrackObjectFull): Promise<Track> => {
+  (user: User) => async (track: SpotifyApi.SingleTrackResponse) => {
     const album = await callSpotify(user, () =>
       spotify.getAlbum(track.album.id)
     );
@@ -16,3 +15,9 @@ export const transformTrack =
       image: album.body.images[0],
     };
   };
+
+export const generateTrack = async (user: User, id: string): Promise<Track> => {
+  const { body } = await callSpotify(user, () => spotify.getTrack(id));
+
+  return transformTrack(user)(body);
+};

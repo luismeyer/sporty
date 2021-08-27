@@ -1,22 +1,12 @@
 <template>
   <div>
+    <Reload :disabled="sessionState.loading" :onClick="refresh" />
+
     <div class="headline">
       <h1>Session</h1>
-      <div class="links">
-        <router-link
-          class="link"
-          to="/settings"
-          v-if="!loading && sessionState.session"
-        >
-          Settings
-        </router-link>
-        <router-link
-          class="link"
-          to="/share"
-          v-if="!loading && sessionState.session"
-        >
-          Share with friends
-        </router-link>
+      <div class="links" v-if="!loading && sessionState.session">
+        <router-link class="link" to="/settings"> Settings </router-link>
+        <router-link class="link" to="/share"> Share with friends </router-link>
       </div>
     </div>
 
@@ -39,57 +29,58 @@
     >
       Create Session
     </button>
-
-    <Fab :disabled="loading || refreshLoading" :onClick="refreshSession" />
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { sessionStore } from "../stores/session";
 
-import Fab from "../components/Fab.vue";
 import User from "../components/User.vue";
+
+import { SessionStore, sessionStore } from "../stores/session";
 import { authStore } from "../stores/auth";
+import Reload from "../components/Reload.vue";
 
 export default defineComponent({
   components: {
-    Fab,
     User,
+    Reload,
   },
+
   data() {
     return {
       sessionState: sessionStore.state,
       authState: authStore.state,
-      loading: !sessionStore.state.hasData,
-      refreshLoading: false,
     };
   },
-  methods: {
-    async handleCreate() {
-      this.loading = true;
-      await sessionStore.create();
-      this.loading = false;
-    },
-    async refreshSession() {
-      this.refreshLoading = true;
-      await sessionStore.fetch();
-      this.refreshLoading = false;
-    },
-    async handleLeave() {
-      this.loading = true;
-      await sessionStore.leave();
-      this.loading = false;
+
+  computed: {
+    loading(): boolean {
+      const state = this.sessionState as SessionStore["state"];
+      return !state.session && state.loading;
     },
   },
+
+  methods: {
+    async handleCreate() {
+      await sessionStore.create();
+    },
+
+    async handleLeave() {
+      await sessionStore.leave();
+    },
+
+    async refresh() {
+      await sessionStore.fetch();
+    },
+  },
+
   async mounted() {
     if (!this.authState.isAuthenticated) {
       this.$router.push({ name: "Login" });
     }
 
-    await this.refreshSession();
-
-    this.loading = false;
+    await sessionStore.fetch();
   },
 });
 </script>
@@ -116,7 +107,7 @@ h1 {
 
 ul {
   display: grid;
-  grid-gap: 12px;
+  grid-gap: 24px;
   justify-items: start;
   padding: 0;
   list-style: none;
@@ -125,6 +116,6 @@ ul {
 .links {
   display: grid;
   grid-auto-flow: column;
-  grid-gap: 8px;
+  grid-gap: 24px;
 }
 </style>

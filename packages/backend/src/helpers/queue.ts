@@ -1,9 +1,9 @@
-import { User } from "@qify/api";
+import { Queue, QueueItem, Track, User } from "@qify/api";
 
 import { updateItem } from "../services/db";
 import { callSpotify, createUri, spotify } from "../services/spotify";
-import { transformTrack } from "./tracks";
-import { sessionUsers } from "./user";
+import { generateTrack } from "./track";
+import { sessionUsers, transformUser } from "./user";
 
 export const updateQueue = async (session: string) => {
   const users = await sessionUsers(session);
@@ -38,12 +38,54 @@ export const updateQueue = async (session: string) => {
   );
 };
 
-export const populatedQueue = async (user: User) => {
-  const tracks = await Promise.all(
-    user.queue.map((track) => callSpotify(user, () => spotify.getTrack(track)))
+const itemsInQueue = (users: User[]): boolean => {
+  return users.some((user) => user.queue.length > 0);
+};
+
+export const generateQueue = async (user: User): Promise<Queue> => {
+  if (!user.session) {
+    const transformedUser = await transformUser(user);
+
+    return Promise.all(
+      user.queue.map(async (id) => ({
+        track: await generateTrack(user, id),
+        user: transformedUser,
+      }))
+    );
+  }
+
+  const usersResponse = await sessionUsers(user.session);
+
+  // Save frontend users in map so we don't request user infor for every transformed song
+  const users = await Promise.all(
+    usersResponse.map(async (user) => ({
+      user,
+      frontendUser: await transformUser(user),
+    }))
   );
 
-  return await Promise.all(
-    tracks.map((track) => track.body).map(transformTrack(user))
-  );
+  const queueUpdates: QueueItem[][] = [];
+
+  while (itemsInQueue(usersResponse)) {
+    const tracks = await Promise.all(
+      users.map(async ({ user, frontendUser }) => {
+        const id = user.queue.shift();
+
+        if (!id) {
+          return;
+        }
+
+        return {
+          user: frontendUser,
+          track: await generateTrack(user, id),
+        };
+      })
+    );
+
+    queueUpdates.push(
+      tracks.filter((item): item is QueueItem => Boolean(item))
+    );
+  }
+
+  return queueUpdates.flat();
 };

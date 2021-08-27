@@ -42,7 +42,14 @@ export type LoginResponse = Response<{ url: string }>;
 
 export type AuthorizeResponse = Response<{ token: string }>;
 
-export type QueueResponse = Response<{ queue: Track[] }>;
+export type QueueItem = {
+  track: Track;
+  user: FrontendUser;
+};
+
+export type Queue = QueueItem[];
+
+export type QueueResponse = Response<{ queue: Queue }>;
 
 export type SearchResponse = Response<{ tracks: Track[] }>;
 
@@ -56,3 +63,5 @@ export type Session = {
 export type SessionResponse = Response<Session>;
 
 export type MessageResponse = Response<{ message: string }>;
+
+export type UserResponse = Response<FrontendUser>;

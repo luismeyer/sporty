@@ -23,6 +23,11 @@ export default defineComponent({
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: white;
+  padding: 0 24px 80px 24px;
+}
+
+body {
+  margin: 0;
 }
 
 a {

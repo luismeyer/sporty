@@ -5,14 +5,21 @@
       <router-link to="/"> Back </router-link>
     </div>
 
-    <span v-if="loading">loading...</span>
+    <span v-if="loading || leaving">loading...</span>
 
-    <div v-else>
+    <div class="settings" v-else>
       <div class="setting">
         <label>Leave session</label>
-        <button v-if="sessionState.session" class="leave" @click="handleLeave">
-          leave
-        </button>
+        <button class="leave" @click="handleLeave">leave</button>
+      </div>
+
+      <div class="setting">
+        <label>Toggle your Spotify player</label>
+        <input
+          type="checkbox"
+          :checked="userState.user?.isPlayer"
+          @change="toggleIsPlayer"
+        />
       </div>
     </div>
   </div>
@@ -22,32 +29,42 @@
 import { defineComponent } from "vue";
 import { authStore } from "../stores/auth";
 import { sessionStore } from "../stores/session";
+import { UserStore, userStore } from "../stores/user";
 
 export default defineComponent({
   data() {
     return {
-      sessionState: sessionStore.state,
-      authState: authStore.state,
-      loading: !sessionStore.state.hasData,
+      userState: userStore.state,
+      leaving: false,
     };
   },
+
+  computed: {
+    loading(): boolean {
+      const userState = this.userState as UserStore["state"];
+
+      return !userState.user && userState.loading;
+    },
+  },
+
   async mounted() {
-    if (!this.authState.isAuthenticated) {
+    if (!authStore.state.isAuthenticated) {
       this.$router.push({ name: "Login" });
     }
 
-    if (!this.sessionState.hasData) {
-      await sessionStore.fetch();
-    }
-
-    this.loading = false;
+    await Promise.all([sessionStore.fetch(), userStore.fetch()]);
   },
+
   methods: {
     async handleLeave() {
-      this.loading = true;
+      this.leaving = true;
+
       await sessionStore.leave();
 
       this.$router.push({ name: "Session" });
+    },
+    async toggleIsPlayer() {
+      await userStore.toggleIsPlayer();
     },
   },
 });
@@ -66,7 +83,15 @@ h1 {
   margin-bottom: 16px;
 }
 
-.setting {
+.settings {
   display: grid;
+  grid-gap: 12px;
+}
+
+.setting {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 24px;
 }
 </style>

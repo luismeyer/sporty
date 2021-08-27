@@ -2,10 +2,10 @@ import { RequestHandler } from "express";
 
 import { MessageResponse } from "@qify/api";
 
-import { authorizeRequest, sessionUsers } from "../helpers/user";
-import { updateItem } from "../services/db";
+import { authorizeRequest, sessionUsers } from "../../helpers/user";
+import { updateItem } from "../../services/db";
 
-export const leave: RequestHandler<unknown, MessageResponse> = async (
+export const leaveSession: RequestHandler<unknown, MessageResponse> = async (
   req,
   res
 ) => {

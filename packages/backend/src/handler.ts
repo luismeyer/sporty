@@ -4,16 +4,18 @@ import serverless from "serverless-http";
 
 import { updateQueue } from "./helpers/queue";
 import { sessionUsers } from "./helpers/user";
-import { add } from "./routes/add";
-import { authorize } from "./routes/authorize";
-import { create } from "./routes/create";
-import { get } from "./routes/get";
-import { join } from "./routes/join";
-import { leave } from "./routes/leave";
-import { login } from "./routes/login";
-import { queue } from "./routes/queue";
-import { remove } from "./routes/remove";
+import { addSong } from "./routes/queue/add";
+import { getQueue } from "./routes/queue/get";
+import { removeSong } from "./routes/queue/remove";
 import { search } from "./routes/search";
+import { createSession } from "./routes/session/create";
+import { getSession } from "./routes/session/get";
+import { joinSession } from "./routes/session/join";
+import { leaveSession } from "./routes/session/leave";
+import { authorizeUser } from "./routes/user/authorize";
+import { getUser } from "./routes/user/get";
+import { loginUser } from "./routes/user/login";
+import { toggleIsPlayer } from "./routes/user/player";
 import { callSpotify, spotify } from "./services/spotify";
 import {
   deleteStateMachine,
@@ -26,19 +28,21 @@ const baseUrl = "/api";
 
 app.use(express.json());
 
-app.get(`${baseUrl}/login`, login);
-app.get(`${baseUrl}/authorize`, authorize);
+app.get(`${baseUrl}/user`, getUser);
+app.get(`${baseUrl}/user/player`, toggleIsPlayer);
+app.get(`${baseUrl}/user/login`, loginUser);
+app.get(`${baseUrl}/user/authorize`, authorizeUser);
 
-app.get(`${baseUrl}/join`, join);
-app.get(`${baseUrl}/get`, get);
-app.get(`${baseUrl}/create`, create);
-app.get(`${baseUrl}/leave`, leave);
+app.get(`${baseUrl}/session`, getSession);
+app.get(`${baseUrl}/session/join`, joinSession);
+app.get(`${baseUrl}/session/create`, createSession);
+app.get(`${baseUrl}/session/leave`, leaveSession);
 
-app.get(`${baseUrl}/add`, add);
-app.get(`${baseUrl}/remove`, remove);
+app.get(`${baseUrl}/queue`, getQueue);
+app.get(`${baseUrl}/queue/add`, addSong);
+app.get(`${baseUrl}/queue/remove`, removeSong);
 
 app.get(`${baseUrl}/search`, search);
-app.get(`${baseUrl}/queue`, queue);
 
 app.use((_req, res, _next) => {
   return res.status(404).json({

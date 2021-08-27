@@ -5,11 +5,11 @@ import { reactive } from "vue";
 
 export const storageKey = "qify-token";
 
-type AuthState = {
+export type AuthState = {
   isAuthenticated: boolean;
 };
 
-type AuthStore = {
+export type AuthStore = {
   state: AuthState;
   login: () => Promise<string>;
   authorize: (code: string) => Promise<string | undefined>;
@@ -20,11 +20,14 @@ export const authStore: AuthStore = {
     isAuthenticated: Boolean(localStorage.getItem("qify-token")),
   }),
   async login() {
-    const res = await fetchApi<LoginResponse>("login");
+    const res = await fetchApi<LoginResponse>("user/login");
     return res.success ? res.body.url : "";
   },
   async authorize(code: string) {
-    const res = await fetchApi<AuthorizeResponse>("authorize", `code=${code}`);
+    const res = await fetchApi<AuthorizeResponse>(
+      "user/authorize",
+      `code=${code}`
+    );
 
     if (!res.success) {
       return;

@@ -53,21 +53,20 @@ export const authorizeRequest = async (
   return getItem(token);
 };
 
+export const transformUser = async (user: User): Promise<FrontendUser> => {
+  const sUser = await callSpotify(user, () => spotify.getMe());
+
+  return {
+    name: user.spotifyId,
+    image: sUser.body.images?.[0].url,
+    isOwner: user.isOwner,
+    isPlayer: user.isPlayer,
+    tracksInQueue: user.queue.length,
+  };
+};
+
 export const transformUsers = async (
   users: User[]
 ): Promise<FrontendUser[]> => {
-  const completeUsers = await Promise.all(
-    users.map(async (sessionUser) => ({
-      ...sessionUser,
-      ...(await callSpotify(sessionUser, () => spotify.getMe())),
-    }))
-  );
-
-  return completeUsers.map((cUser) => ({
-    name: cUser.body.display_name ?? cUser.body.id,
-    image: cUser.body.images?.[0].url,
-    isOwner: cUser.isOwner,
-    isPlayer: cUser.isPlayer,
-    tracksInQueue: cUser.queue.length,
-  }));
+  return Promise.all(users.map(transformUser));
 };

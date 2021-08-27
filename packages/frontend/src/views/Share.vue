@@ -17,26 +17,27 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { authStore } from "../stores/auth";
-import { sessionStore } from "../stores/session";
+import { SessionStore, sessionStore } from "../stores/session";
 
 export default defineComponent({
   data() {
     return {
       sessionState: sessionStore.state,
       authState: authStore.state,
-      loading: !sessionStore.state.hasData,
     };
+  },
+  computed: {
+    loading(): boolean {
+      const state = this.sessionState as SessionStore["state"];
+      return !state.session && state.loading;
+    },
   },
   async mounted() {
     if (!this.authState.isAuthenticated) {
       this.$router.push({ name: "Login" });
     }
 
-    if (!this.sessionState.hasData) {
-      await sessionStore.fetch();
-    }
-
-    this.loading = false;
+    await sessionStore.fetch();
   },
 });
 </script>

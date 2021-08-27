@@ -6,10 +6,10 @@ import {
   authorizeRequest,
   sessionUsers,
   transformUsers,
-} from "../helpers/user";
-import { transformSession } from "../helpers/session";
+} from "../../helpers/user";
+import { transformSession } from "../../helpers/session";
 
-export const get: RequestHandler<unknown, SessionResponse> = async (
+export const getSession: RequestHandler<unknown, SessionResponse> = async (
   req,
   res
 ) => {
