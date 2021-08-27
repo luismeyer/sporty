@@ -57,7 +57,7 @@ export const transformUser = async (user: User): Promise<FrontendUser> => {
   const sUser = await callSpotify(user, () => spotify.getMe());
 
   return {
-    name: user.spotifyId,
+    name: sUser.body.display_name ?? user.spotifyId,
     image: sUser.body.images?.[0].url,
     isOwner: user.isOwner,
     isPlayer: user.isPlayer,
