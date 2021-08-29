@@ -1,12 +1,14 @@
-import AWS from 'aws-sdk';
+import AWS from "aws-sdk";
 
-import { queueLambdaArn, stateMachineRoleArn } from '../helpers/const';
-import { timer } from '../helpers/timer';
+import { queueLambdaArn, stateMachineRoleArn } from "../helpers/const";
+import { timer } from "../helpers/timer";
 
 const stepFunctions = new AWS.StepFunctions({ region: "eu-central-1" });
 
+const MACHINE_CREATION_TIMEOUT = 5000;
+
 const definition = (timeInMS: number) => {
-  const Seconds = Math.floor(timeInMS / 1000);
+  const Seconds = Math.floor((timeInMS - MACHINE_CREATION_TIMEOUT) / 1000);
 
   return JSON.stringify({
     Comment: "State Machine for qify",
@@ -16,7 +18,7 @@ const definition = (timeInMS: number) => {
         Comment:
           "A Wait state delays the state machine from continuing for a specified time.",
         Type: "Wait",
-        Seconds: Seconds > 0 ? Seconds : 5,
+        Seconds: Seconds > 0 ? Seconds : 30,
         Next: "Invoke",
       },
       Invoke: {
@@ -102,7 +104,7 @@ export const updateStateMachine = async (
     })
     .promise();
 
-  await timer(5000);
+  await timer(MACHINE_CREATION_TIMEOUT);
 
   await startStateMachine(arn, session);
 

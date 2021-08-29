@@ -45,7 +45,7 @@ export const createSession: RequestHandler<unknown, SessionResponse> = async (
     (device) => device.is_active
   );
 
-  let timeInMS = 10000;
+  let timeInMS = 30000;
 
   // Calculate time based on the current Track
   if (hasActiveDevice) {
@@ -55,7 +55,7 @@ export const createSession: RequestHandler<unknown, SessionResponse> = async (
 
     const { item, progress_ms } = body;
 
-    timeInMS = item && progress_ms ? item.duration_ms - progress_ms : 10000;
+    timeInMS = item && progress_ms ? item.duration_ms - progress_ms : 30000;
   }
 
   await updateQueue(session);
