@@ -1,10 +1,13 @@
 <template>
-  <div>
-    <Reload :disabled="refreshLoading || loading" :onClick="refreshQueue" />
+  <div class="container-with-reloader">
+    <Reload :reload="refreshQueue" v-bind:additionalLoading="loading" />
 
-    <h1>Your Q</h1>
+    <h1>Your Queue</h1>
 
-    <div v-if="loading">loading...</div>
+    <div v-if="loading || queueState.queue?.length === 0" class="empty">
+      <span>is {{ loading ? "loading..." : "empty... add something" }} </span>
+      <img src="../assets/queue.png" />
+    </div>
 
     <ul v-else>
       <Track
@@ -24,10 +27,10 @@ import { defineComponent } from "vue";
 
 import { authStore } from "../stores/auth";
 import { QueueStore, queueStore } from "../stores/queue";
+import { UserStore, userStore } from "../stores/user";
 
 import Track from "../components/Track.vue";
 import Reload from "../components/Reload.vue";
-import { UserStore, userStore } from "../stores/user";
 
 export default defineComponent({
   components: {
@@ -39,7 +42,6 @@ export default defineComponent({
     return {
       queueState: queueStore.state,
       userState: userStore.state,
-      refreshLoading: false,
     };
   },
 
@@ -58,9 +60,7 @@ export default defineComponent({
     },
 
     async refreshQueue() {
-      this.refreshLoading = true;
       await queueStore.fetch();
-      this.refreshLoading = false;
     },
   },
 
@@ -69,14 +69,20 @@ export default defineComponent({
       this.$router.push({ name: "Login" });
     }
 
-    await Promise.all([this.refreshQueue(), userStore.fetch()]);
+    await userStore.fetch();
   },
 });
 </script>
 
 <style scoped>
+.container {
+  display: grid;
+  justify-items: center;
+}
+
 h1 {
   text-align: center;
+  margin-top: 16px;
 }
 
 ul {
@@ -85,5 +91,18 @@ ul {
   justify-items: start;
   padding: 0;
   list-style: none;
+}
+
+img {
+  max-width: 100%;
+}
+
+.empty {
+  display: grid;
+  justify-items: center;
+}
+
+.spinner {
+  margin: 0 auto;
 }
 </style>

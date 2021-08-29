@@ -1,59 +1,113 @@
 <template>
-  <button :disabled="disabled" class="fab" @click="onClick">
-    <svg
-      v-bind:class="{ disabled: disabled }"
-      width="32"
-      height="32"
-      viewBox="0 0 24 24"
-    >
-      <path
-        d="M10 11H7.101l.001-.009a4.956 4.956 0 0 1 .752-1.787 5.054 5.054 0 0 1 2.2-1.811c.302-.128.617-.226.938-.291a5.078 5.078 0 0 1 2.018 0 4.978 4.978 0 0 1 2.525 1.361l1.416-1.412a7.036 7.036 0 0 0-2.224-1.501 6.921 6.921 0 0 0-1.315-.408 7.079 7.079 0 0 0-2.819 0 6.94 6.94 0 0 0-1.316.409 7.04 7.04 0 0 0-3.08 2.534 6.978 6.978 0 0 0-1.054 2.505c-.028.135-.043.273-.063.41H2l4 4 4-4zm4 2h2.899l-.001.008a4.976 4.976 0 0 1-2.103 3.138 4.943 4.943 0 0 1-1.787.752 5.073 5.073 0 0 1-2.017 0 4.956 4.956 0 0 1-1.787-.752 5.072 5.072 0 0 1-.74-.61L7.05 16.95a7.032 7.032 0 0 0 2.225 1.5c.424.18.867.317 1.315.408a7.07 7.07 0 0 0 2.818 0 7.031 7.031 0 0 0 4.395-2.945 6.974 6.974 0 0 0 1.053-2.503c.027-.135.043-.273.063-.41H22l-4-4-4 4z"
-      />
-    </svg>
-  </button>
+  <div class="reload" @click="handleLoad">
+    <Spinner :spinning="loading || additionalLoading" />
+  </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
+
+import Spinner from "./Spinner.vue";
+
+const SPINNER_HEIGHT = 64;
 
 export default defineComponent({
+  components: {
+    Spinner,
+  },
+
   props: {
-    disabled: Boolean,
-    onClick: Function,
+    reload: {
+      required: true,
+      type: Function as PropType<() => Promise<void>>,
+    },
+    additionalLoading: Boolean,
+  },
+
+  data() {
+    return {
+      loading: false,
+      timer: 0,
+    };
+  },
+
+  async mounted() {
+    this.scrollTop();
+
+    await this.handleLoad();
+
+    if (!this.additionalLoading) {
+      console.log("SCROLL");
+      window.scrollTo({ top: SPINNER_HEIGHT, behavior: "smooth" });
+    }
+
+    window.addEventListener("beforeunload", this.scrollTop);
+
+    window.addEventListener("scroll", this.handleScroll);
+  },
+
+  unmounted() {
+    window.removeEventListener("beforeunload", this.scrollTop);
+
+    window.removeEventListener("scroll", this.handleScroll);
+  },
+
+  methods: {
+    scrollTop() {
+      window.scrollTo({ top: 0 });
+    },
+
+    async handleLoad() {
+      this.loading = true;
+      await this.reload();
+      this.loading = false;
+    },
+
+    async handleScroll() {
+      if (this.timer !== null) {
+        clearTimeout(this.timer);
+      }
+
+      this.timer = setTimeout(async () => {
+        if (window.scrollY <= SPINNER_HEIGHT && window.scrollY > 0) {
+          window.scrollTo({ top: SPINNER_HEIGHT, behavior: "smooth" });
+          return;
+        }
+
+        if (window.scrollY !== 0) {
+          return;
+        }
+
+        this.loading = true;
+        await this.reload();
+        this.loading = false;
+
+        window.scrollTo({ top: SPINNER_HEIGHT, behavior: "smooth" });
+      }, 150);
+    },
   },
 });
 </script>
 
-<style scoped>
-@keyframes spinning {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.fab {
-  background-color: white;
+<style>
+.reload {
+  background-color: #00d953;
   border: none;
   outline: none;
-  padding: 8px;
+  padding: 16px 16px 18px 16px;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
   width: 100vw;
+
   margin-left: -24px;
-  transition: opacity 0.5s ease;
+  margin-top: -16px;
 }
 
-.fab:disabled {
-  opacity: 0.8;
-}
-
-svg.disabled {
-  animation: spinning 0.6s ease infinite;
+.container-with-reloader {
+  /* Height is calculated by the Reload-bar height and the Footer-height */
+  height: calc(100vh + 64px - 70px);
+  scroll-snap-type: y mandatory;
 }
 </style>

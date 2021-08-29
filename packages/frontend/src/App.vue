@@ -14,6 +14,16 @@ export default defineComponent({
   components: {
     Footer,
   },
+
+  mounted() {
+    const handleResize = () => {
+      document.body.style.height = window.innerHeight + "px";
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    handleResize();
+  },
 });
 </script>
 
@@ -23,7 +33,7 @@ export default defineComponent({
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: white;
-  padding: 0 24px 80px 24px;
+  padding: 16px 24px 70px 24px;
 }
 
 body {
@@ -39,7 +49,7 @@ html {
 }
 
 h1 {
-  margin: 16px 0;
+  margin: 0 0 16px 0;
 }
 
 * {

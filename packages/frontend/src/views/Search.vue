@@ -1,7 +1,8 @@
 <template>
   <div>
     <h1>Search</h1>
-    <label>
+
+    <div class="input">
       <input
         @keyup.enter="handleSubmit"
         ref="queryInput"
@@ -9,10 +10,10 @@
         type="text"
         placeholder="Spotify input"
       />
-      <span class="loading" v-if="isLoading">loading...</span>
-    </label>
+      <Spinner class="loading" size="40" :spinning="isLoading" color="black" />
+    </div>
 
-    <span v-if="!isLoading && searchResults.length === 0">no results</span>
+    <img v-if="searchResults.length === 0" src="../assets/search.png" />
 
     <ul>
       <li v-for="track in searchResults" :key="track.id">
@@ -29,11 +30,15 @@ import { SearchResponse, Track as TrackType } from "@qify/api";
 
 import { authStore } from "../stores/auth";
 import { queueStore } from "../stores/queue";
-import { fetchApi } from "../api";
+
 import Track from "../components/Track.vue";
+import Spinner from "../components/Spinner.vue";
+
+import { fetchApi } from "../api";
 
 export default defineComponent({
   components: {
+    Spinner,
     Track,
   },
 
@@ -107,14 +112,18 @@ export default defineComponent({
 </script>
 
 <style scoped>
-label {
+img {
+  max-width: 100%;
+}
+
+.input {
   position: relative;
 }
 
 .loading {
   position: absolute;
-  top: 0;
-  right: 12px;
+  right: 8px;
+  top: 6px;
   color: black;
 }
 
@@ -125,6 +134,7 @@ h1 {
 input {
   width: 100%;
   padding: 10px;
+  font-size: 24px;
 }
 
 ul {

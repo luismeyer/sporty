@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isAuthenticated" class="container">
+  <div v-if="isAuthenticated" class="footer-container">
     <router-link v-slot="{ isActive }" class="link" to="/">
       <svg fill="white" width="24" height="24" viewBox="0 0 24 24">
         <path
@@ -44,9 +44,9 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.container {
+.footer-container {
   width: 100vw;
-  padding: 16px;
+  padding: 12px;
   position: fixed;
   bottom: 0;
   left: 0;

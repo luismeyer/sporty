@@ -26,8 +26,15 @@ export const leaveSession: RequestHandler<unknown, MessageResponse> = async (
   }
 
   await updateItem(user.id, {
-    expressionAttributeNames: { "#session": "session", "#isOwner": "isOwner" },
-    updateExpression: "Remove #session, #isOwner",
+    expressionAttributeNames: {
+      "#session": "session",
+      "#isOwner": "isOwner",
+      "#queue": "queue",
+    },
+    expressionAttributeValues: {
+      ":queue": [],
+    },
+    updateExpression: "REMOVE #session, #isOwner SET #queue = :queue",
   });
 
   const users = await sessionUsers(user.session);

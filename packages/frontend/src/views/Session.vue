@@ -1,16 +1,15 @@
 <template>
-  <div>
-    <Reload :disabled="sessionState.loading" :onClick="refresh" />
+  <div class="container-with-reloader">
+    <Reload :reload="refresh" />
 
     <div class="headline">
       <h1>Session</h1>
+
       <div class="links" v-if="!loading && sessionState.session">
         <router-link class="link" to="/settings"> Settings </router-link>
         <router-link class="link" to="/share"> Share with friends </router-link>
       </div>
     </div>
-
-    <span v-if="loading">loading...</span>
 
     <div v-if="!loading && sessionState.session">
       <ul>
@@ -22,13 +21,10 @@
       </ul>
     </div>
 
-    <button
-      v-if="!loading && !sessionState.session"
-      class="create"
-      @click="handleCreate"
-    >
-      Create Session
-    </button>
+    <div v-if="loading || !sessionState.session" class="create-container">
+      <img src="../assets/session.png" />
+      <button class="create" @click="handleCreate">Create Session</button>
+    </div>
   </div>
 </template>
 
@@ -36,10 +32,10 @@
 import { defineComponent } from "vue";
 
 import User from "../components/User.vue";
+import Reload from "../components/Reload.vue";
 
 import { SessionStore, sessionStore } from "../stores/session";
 import { authStore } from "../stores/auth";
-import Reload from "../components/Reload.vue";
 
 export default defineComponent({
   components: {
@@ -89,6 +85,7 @@ export default defineComponent({
 h1 {
   text-align: center;
   margin-bottom: 8px;
+  margin-top: 16px;
 }
 
 .headline {
@@ -97,12 +94,23 @@ h1 {
   margin-bottom: 16px;
 }
 
+.create-container {
+  position: relative;
+}
+
 .create {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  padding: 24px;
+  padding: 16px 32px;
+  background-color: white;
+  border-radius: 8px;
+  border: none;
+  color: black;
+  font-size: 24px;
+  box-shadow: rgb(0 0 0) 0px 6px 10px;
+  width: max-content;
 }
 
 ul {
@@ -117,5 +125,14 @@ ul {
   display: grid;
   grid-auto-flow: column;
   grid-gap: 24px;
+}
+
+.container {
+  display: grid;
+  justify-items: center;
+}
+
+img {
+  max-width: 100%;
 }
 </style>

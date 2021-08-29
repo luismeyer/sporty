@@ -26,7 +26,7 @@
         >User has <b>{{ user.tracksInQueue }}</b> Song{{
           user.tracksInQueue === 1 ? "" : "s"
         }}
-        in the Q</span
+        in the Queue</span
       >
     </div>
 
