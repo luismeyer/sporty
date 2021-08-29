@@ -1,6 +1,6 @@
 <template>
   <div class="reload" @click="handleLoad">
-    <Spinner :spinning="loading || additionalLoading" />
+    <Spinner :spinning="true" />
   </div>
 </template>
 
@@ -37,8 +37,7 @@ export default defineComponent({
     await this.handleLoad();
 
     if (!this.additionalLoading) {
-      console.log("SCROLL");
-      window.scrollTo({ top: SPINNER_HEIGHT, behavior: "smooth" });
+      this.scrollToContent();
     }
 
     window.addEventListener("beforeunload", this.scrollTop);
@@ -52,9 +51,31 @@ export default defineComponent({
     window.removeEventListener("scroll", this.handleScroll);
   },
 
+  watch: {
+    additionalLoading() {
+      this.handleLoadingUpdate();
+    },
+
+    loading() {
+      this.handleLoadingUpdate();
+    },
+  },
+
   methods: {
+    handleLoadingUpdate() {
+      if (this.loading || this.additionalLoading) {
+        return;
+      }
+
+      this.scrollToContent();
+    },
+
     scrollTop() {
       window.scrollTo({ top: 0 });
+    },
+
+    scrollToContent() {
+      window.scrollTo({ top: SPINNER_HEIGHT, behavior: "smooth" });
     },
 
     async handleLoad() {
@@ -70,19 +91,17 @@ export default defineComponent({
 
       this.timer = setTimeout(async () => {
         if (window.scrollY <= SPINNER_HEIGHT && window.scrollY > 0) {
-          window.scrollTo({ top: SPINNER_HEIGHT, behavior: "smooth" });
+          this.scrollToContent();
           return;
         }
 
-        if (window.scrollY !== 0) {
+        if (window.scrollY > 0) {
           return;
         }
 
         this.loading = true;
         await this.reload();
         this.loading = false;
-
-        window.scrollTo({ top: SPINNER_HEIGHT, behavior: "smooth" });
       }, 150);
     },
   },

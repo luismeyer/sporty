@@ -25,7 +25,6 @@ export const userStore: UserStore = {
       this.state.user = response.body;
     }
 
-    console.log("DONE");
     this.state.loading = false;
   },
   async toggleIsPlayer() {
