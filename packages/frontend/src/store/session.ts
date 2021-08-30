@@ -11,8 +11,6 @@ export type SessionState = {
 };
 
 export const sessionModule: Module<SessionState, RootState> = {
-  namespaced: true,
-
   state: {
     loading: false,
   },
