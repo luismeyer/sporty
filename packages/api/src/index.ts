@@ -15,6 +15,11 @@ export type FrontendUser = Pick<User, "isOwner" | "isPlayer"> & {
   image?: string;
 };
 
+export type Session = {
+  id: string;
+  timeout: string;
+};
+
 export type Track = {
   id: string;
   name: string;
@@ -53,14 +58,15 @@ export type QueueResponse = Response<{ queue: Queue }>;
 
 export type SearchResponse = Response<{ tracks: Track[] }>;
 
-export type Session = {
+export type FrontendSession = {
   session: string;
+  timeout: string;
   url: string;
   qrCode: string;
   users: FrontendUser[];
 };
 
-export type SessionResponse = Response<Session>;
+export type SessionResponse = Response<FrontendSession>;
 
 export type MessageResponse = Response<{ message: string }>;
 

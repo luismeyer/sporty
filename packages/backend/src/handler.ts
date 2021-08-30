@@ -1,8 +1,13 @@
 import { Handler } from "aws-lambda";
+import dayjs from "dayjs";
 import express from "express";
 import serverless from "serverless-http";
 
+import { Session } from "@qify/api";
+
+import { hasActiveDevice } from "./helpers/device";
 import { updateQueue } from "./helpers/queue";
+import { deleteSession, updateSessionTimeout } from "./helpers/session";
 import { sessionUsers } from "./helpers/user";
 import { addSong } from "./routes/queue/add";
 import { getQueue } from "./routes/queue/get";
@@ -16,6 +21,7 @@ import { authorizeUser } from "./routes/user/authorize";
 import { getUser } from "./routes/user/get";
 import { loginUser } from "./routes/user/login";
 import { toggleIsPlayer } from "./routes/user/player";
+import { getItem } from "./services/db";
 import { callSpotify, spotify } from "./services/spotify";
 import {
   deleteStateMachine,
@@ -53,42 +59,60 @@ app.use((_req, res, _next) => {
 export const handler = serverless(app);
 
 export const queueFunction: Handler<{ session?: string }> = async (event) => {
-  const session = String(event.session);
+  const sessionId = String(event.session);
+
+  const session = await getItem<Session>(sessionId);
 
   if (!session) {
-    return "error";
+    return "error no session";
   }
 
-  const users = await sessionUsers(session);
+  const users = await sessionUsers(session.id);
 
-  if (users.length === 0) {
-    const arn = await stateMachineArn(session);
+  // Delete Machine if all Users left or session ran in the timeout
+  if (users.length === 0 || dayjs().isAfter(session.timeout)) {
+    await deleteSession(session, users);
+
+    const arn = await stateMachineArn(session.id);
 
     if (!arn) {
-      return "error";
+      return "error no arn";
     }
 
     await deleteStateMachine(arn);
 
-    return "success";
+    return "delete success";
   }
 
-  const sessionOwner = users.find((user) => user.isOwner);
+  // Time in MS when the next Queue Lambda will be executed
+  let time: number | undefined;
 
-  if (!sessionOwner) {
-    return "No session owner";
+  const players = users.filter((user) => user.isPlayer);
+  const sessionIsActive = await hasActiveDevice(players);
+
+  // Increase timeout if there is atleast one active device
+  if (sessionIsActive) {
+    await updateSessionTimeout(
+      session,
+      dayjs().add(5, "minutes").toISOString()
+    );
   }
 
-  await updateQueue(session);
+  // Calculate the Machine Waiting Time by the Currentsong
+  if (players.length) {
+    const [player] = players;
 
-  const { body } = await callSpotify(sessionOwner, () =>
-    spotify.getMyCurrentPlayingTrack()
-  );
+    const { body } = await callSpotify(player, () =>
+      spotify.getMyCurrentPlayingTrack()
+    );
 
-  return await updateStateMachine(
-    session,
-    body.item && body.progress_ms
-      ? body.item.duration_ms - body.progress_ms
-      : 10000
-  );
+    time =
+      body.item && body.progress_ms
+        ? body.item.duration_ms - body.progress_ms
+        : undefined;
+  }
+
+  await updateQueue(session.id);
+
+  return await updateStateMachine(session.id, time);
 };

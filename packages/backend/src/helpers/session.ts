@@ -1,7 +1,38 @@
+import dayjs from "dayjs";
 import qrcode from "qrcode";
-import { FrontendUser, Session } from "@qify/api";
 
+import { FrontendSession, FrontendUser, Session, User } from "@qify/api";
+
+import { deleteItem, getItem, putItem, updateItem } from "../services/db";
 import { frontendUrl } from "./const";
+import { removeUserFromSession } from "./user";
+
+const createSessionId = () => String(Math.round(Math.random() * 9000 + 1000));
+
+export const generateSession = async (
+  user: User
+): Promise<Session | undefined> => {
+  let sessionId = createSessionId();
+  let sessionExists = Boolean(await getItem<Session>(sessionId));
+
+  while (sessionExists) {
+    sessionExists = Boolean(await getItem<Session>(sessionId));
+    sessionId = createSessionId();
+  }
+
+  // Update session and activate owner and player mode
+  await putItem<User>({
+    ...user,
+    session: sessionId,
+    isOwner: true,
+    isPlayer: true,
+  });
+
+  return putItem<Session>({
+    id: sessionId,
+    timeout: dayjs().add(5, "minutes").toISOString(),
+  });
+};
 
 const svgToDataURL = (svgStr: string) => {
   const encoded = encodeURIComponent(svgStr)
@@ -15,18 +46,40 @@ const svgToDataURL = (svgStr: string) => {
 };
 
 export const transformSession = async (
-  session: string,
+  session: Session,
   users: FrontendUser[]
-): Promise<Session> => {
-  const url = frontendUrl + `/join?session=${session}`;
+): Promise<FrontendSession> => {
+  const url = frontendUrl + `/join?session=${session.id}`;
 
   const svg = await qrcode.toString(url, { type: "svg", margin: 2 });
   const qrCode = svgToDataURL(svg);
 
   return {
-    session,
+    session: session.id,
+    timeout: session.timeout,
     url,
     qrCode,
     users,
   };
+};
+
+export const updateSessionTimeout = async (
+  session: Session,
+  timeout: string
+) => {
+  await updateItem(session.id, {
+    expressionAttributeNames: {
+      "#timeout": "timeout",
+    },
+    expressionAttributeValues: {
+      ":timeout": timeout,
+    },
+    updateExpression: "SET #timeout = :timeout ",
+  });
+};
+
+export const deleteSession = async (session: Session, users: User[]) => {
+  await deleteItem(session.id);
+
+  await Promise.all(users.map(removeUserFromSession));
 };

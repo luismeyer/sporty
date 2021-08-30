@@ -1,6 +1,6 @@
-import AWS from 'aws-sdk';
+import AWS from "aws-sdk";
 
-import { ddbTable } from '../helpers/const';
+import { ddbTable } from "../helpers/const";
 
 const { SPOTIFY_ID_INDEX, SESSION_INDEX } = process.env;
 
@@ -25,6 +25,19 @@ export const getItem = async <T>(id: string): Promise<T | undefined> => {
   }
 
   return result.Item as T;
+};
+
+export const deleteItem = async (id: string): Promise<boolean> => {
+  const result = await DB.delete({
+    TableName: ddbTable,
+    Key: { id },
+  }).promise();
+
+  if (result.$response.error) {
+    return false;
+  }
+
+  return true;
 };
 
 export const putItem = async <T>(item: T): Promise<T | undefined> => {

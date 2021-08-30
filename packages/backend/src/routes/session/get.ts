@@ -1,13 +1,14 @@
 import { RequestHandler } from "express";
 
-import { SessionResponse } from "@qify/api";
+import { Session, SessionResponse } from "@qify/api";
 
+import { transformSession } from "../../helpers/session";
 import {
   authorizeRequest,
   sessionUsers,
   transformUsers,
 } from "../../helpers/user";
-import { transformSession } from "../../helpers/session";
+import { getItem } from "../../services/db";
 
 export const getSession: RequestHandler<unknown, SessionResponse> = async (
   req,
@@ -29,10 +30,19 @@ export const getSession: RequestHandler<unknown, SessionResponse> = async (
     });
   }
 
+  const session = await getItem<Session>(user.session);
+
+  if (!session) {
+    return res.json({
+      success: false,
+      error: "Error fetching session",
+    });
+  }
+
   const users = await sessionUsers(user.session);
 
   res.json({
     success: true,
-    body: await transformSession(user.session, await transformUsers(users)),
+    body: await transformSession(session, await transformUsers(users)),
   });
 };

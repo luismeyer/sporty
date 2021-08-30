@@ -1,14 +1,14 @@
 import { RequestHandler } from "express";
 
-import { SessionResponse } from "@qify/api";
+import { Session, SessionResponse } from "@qify/api";
 
+import { transformSession } from "../../helpers/session";
 import {
   authorizeRequest,
   sessionUsers,
   transformUsers,
 } from "../../helpers/user";
-import { updateItem } from "../../services/db";
-import { transformSession } from "../../helpers/session";
+import { getItem, updateItem } from "../../services/db";
 
 type Params = {
   session: string;
@@ -20,10 +20,19 @@ export const joinSession: RequestHandler<
   unknown,
   Params
 > = async (req, res) => {
-  const { session } = req.query;
+  const { session: sessionId } = req.query;
+
+  if (!sessionId) {
+    return res.json({ success: false, error: "Missing session" });
+  }
+
+  const session = await getItem<Session>(sessionId);
 
   if (!session) {
-    return res.json({ success: false, error: "Missing session" });
+    return res.json({
+      success: false,
+      error: "Error fetching session",
+    });
   }
 
   const user = await authorizeRequest(req.headers);
@@ -36,7 +45,7 @@ export const joinSession: RequestHandler<
     return res.json({ success: false, error: "Already in Session" });
   }
 
-  const users = await sessionUsers(session);
+  const users = await sessionUsers(session.id);
 
   if (users.length === 0) {
     return res.json({ success: false, error: "Session doesn't exist" });
@@ -54,7 +63,7 @@ export const joinSession: RequestHandler<
     updateExpression: "SET #isOwner = :isOwner, #session = :session",
   });
 
-  const updatedUsers = await sessionUsers(session);
+  const updatedUsers = await sessionUsers(session.id);
 
   res.json({
     success: true,

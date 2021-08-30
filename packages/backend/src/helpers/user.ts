@@ -74,3 +74,17 @@ export const transformUsers = async (
 ): Promise<FrontendUser[]> => {
   return Promise.all(users.map(transformUser));
 };
+
+export const removeUserFromSession = async (user: User) => {
+  await updateItem(user.id, {
+    expressionAttributeNames: {
+      "#session": "session",
+      "#isOwner": "isOwner",
+      "#queue": "queue",
+    },
+    expressionAttributeValues: {
+      ":queue": [],
+    },
+    updateExpression: "REMOVE #session, #isOwner SET #queue = :queue",
+  });
+};

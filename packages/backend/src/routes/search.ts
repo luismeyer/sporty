@@ -2,7 +2,7 @@ import { RequestHandler } from "express";
 
 import { SearchResponse } from "@qify/api";
 
-import { generateTrack, transformTrack } from "../helpers/track";
+import { transformTrack } from "../helpers/track";
 import { authorizeRequest } from "../helpers/user";
 import { callSpotify, spotify } from "../services/spotify";
 

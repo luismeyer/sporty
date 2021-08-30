@@ -1,14 +1,19 @@
 import AWS from "aws-sdk";
 
-import { queueLambdaArn, stateMachineRoleArn } from "../helpers/const";
+import { queueLambdaArn, stateMachineRoleArn, __DEV__ } from "../helpers/const";
 import { timer } from "../helpers/timer";
 
 const stepFunctions = new AWS.StepFunctions({ region: "eu-central-1" });
 
 const MACHINE_CREATION_TIMEOUT = 5000;
+const MACHINE_DEFAULT_WAITING_TIME = 60;
 
-const definition = (timeInMS: number) => {
-  const Seconds = Math.floor((timeInMS - MACHINE_CREATION_TIMEOUT) / 1000);
+const definition = (timeInMS?: number) => {
+  const time = timeInMS
+    ? Math.floor((timeInMS - MACHINE_CREATION_TIMEOUT) / 1000)
+    : MACHINE_DEFAULT_WAITING_TIME;
+
+  const Seconds = time > 0 ? time : MACHINE_DEFAULT_WAITING_TIME;
 
   return JSON.stringify({
     Comment: "State Machine for qify",
@@ -18,7 +23,7 @@ const definition = (timeInMS: number) => {
         Comment:
           "A Wait state delays the state machine from continuing for a specified time.",
         Type: "Wait",
-        Seconds: Seconds > 0 ? Seconds : 30,
+        Seconds,
         Next: "Invoke",
       },
       Invoke: {
@@ -68,9 +73,14 @@ export const stateMachineArn = async (session: string) => {
 
 export const createStateMachine = async (
   session: string,
-  timeInMS: number
+  timeInMS?: number
 ): Promise<string> => {
   const machineDefinition = definition(timeInMS);
+
+  if (__DEV__) {
+    console.log("Creating Statemachine with definition: ", machineDefinition);
+    return "success";
+  }
 
   const result = await stepFunctions
     .createStateMachine({
@@ -87,14 +97,19 @@ export const createStateMachine = async (
 
 export const updateStateMachine = async (
   session: string,
-  timeInMS: number
+  timeInMS?: number
 ): Promise<string | undefined> => {
   const machineDefinition = definition(timeInMS);
+
+  if (__DEV__) {
+    console.log("Updating Statemachine with definition: ", machineDefinition);
+    return "success";
+  }
 
   const arn = await stateMachineArn(session);
 
   if (!arn) {
-    return "error";
+    return "error no arn";
   }
 
   await stepFunctions

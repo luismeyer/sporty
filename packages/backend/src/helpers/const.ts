@@ -52,3 +52,5 @@ export const spotifyBasicHeader = `Basic ${Buffer.from(
 ).toString("base64")}`;
 
 export const frontendUrl = IS_OFFLINE ? "http://localhost:8080" : FRONTEND_URL;
+
+export const __DEV__ = IS_OFFLINE;

@@ -1,13 +1,13 @@
 import { RequestHandler } from "express";
 
-import { SessionResponse, User } from "@qify/api";
+import { SessionResponse } from "@qify/api";
 
+import { hasActiveDevice } from "../../helpers/device";
 import { updateQueue } from "../../helpers/queue";
-import { authorizeRequest } from "../../helpers/user";
-import { putItem } from "../../services/db";
+import { generateSession, transformSession } from "../../helpers/session";
+import { authorizeRequest, transformUser } from "../../helpers/user";
 import { callSpotify, spotify } from "../../services/spotify";
 import { createStateMachine } from "../../services/state-machine";
-import { transformSession } from "../../helpers/session";
 
 export const createSession: RequestHandler<unknown, SessionResponse> = async (
   req,
@@ -29,41 +29,37 @@ export const createSession: RequestHandler<unknown, SessionResponse> = async (
     });
   }
 
-  const session = String(Math.round(Math.random() * 9000 + 1000));
+  const session = await generateSession(user);
 
-  // Update session and activate owner and player mode
-  await putItem<User>({
-    ...user,
-    session,
-    isOwner: true,
-    isPlayer: true,
-  });
+  if (!session) {
+    return res.json({
+      success: false,
+      error: "Error creating session",
+    });
+  }
 
   // Search for active device
-  const devices = await callSpotify(user, () => spotify.getMyDevices());
-  const hasActiveDevice = devices.body.devices.some(
-    (device) => device.is_active
-  );
+  const isActive = await hasActiveDevice([user]);
 
-  let timeInMS = 30000;
+  let timeInMS: number | undefined;
 
   // Calculate time based on the current Track
-  if (hasActiveDevice) {
+  if (isActive) {
     const { body } = await callSpotify(user, () =>
       spotify.getMyCurrentPlayingTrack()
     );
 
     const { item, progress_ms } = body;
 
-    timeInMS = item && progress_ms ? item.duration_ms - progress_ms : 30000;
+    timeInMS = item && progress_ms ? item.duration_ms - progress_ms : undefined;
   }
 
-  await updateQueue(session);
+  await updateQueue(session.id);
 
-  await createStateMachine(session, timeInMS);
+  await createStateMachine(session.id, timeInMS);
 
   res.json({
     success: true,
-    body: await transformSession(session, []),
+    body: await transformSession(session, [await transformUser(user)]),
   });
 };

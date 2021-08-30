@@ -2,7 +2,11 @@ import { RequestHandler } from "express";
 
 import { MessageResponse } from "@qify/api";
 
-import { authorizeRequest, sessionUsers } from "../../helpers/user";
+import {
+  authorizeRequest,
+  removeUserFromSession,
+  sessionUsers,
+} from "../../helpers/user";
 import { updateItem } from "../../services/db";
 
 export const leaveSession: RequestHandler<unknown, MessageResponse> = async (
@@ -25,17 +29,7 @@ export const leaveSession: RequestHandler<unknown, MessageResponse> = async (
     });
   }
 
-  await updateItem(user.id, {
-    expressionAttributeNames: {
-      "#session": "session",
-      "#isOwner": "isOwner",
-      "#queue": "queue",
-    },
-    expressionAttributeValues: {
-      ":queue": [],
-    },
-    updateExpression: "REMOVE #session, #isOwner SET #queue = :queue",
-  });
+  await removeUserFromSession(user);
 
   const users = await sessionUsers(user.session);
 

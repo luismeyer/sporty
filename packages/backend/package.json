@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@qify/api": "1.0.0",
+    "dayjs": "^1.10.6",
     "express": "^4.17.1",
     "node-fetch": "^2.6.1",
     "qrcode": "^1.4.4",
