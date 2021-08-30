@@ -1,6 +1,6 @@
 <template>
   <svg
-    v-bind:class="{ spinning }"
+    :class="{ spinning }"
     :width="size ?? 32"
     :height="size ?? 32"
     :fill="color ?? 'white'"

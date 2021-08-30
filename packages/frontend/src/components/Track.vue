@@ -1,5 +1,5 @@
 <template>
-  <li @click="handleClick" class="track" v-bind:class="{ disabled }">
+  <li @click="handleClick" class="track" :class="{ disabled }">
     <img
       class="song-image"
       :src="track.image.url"

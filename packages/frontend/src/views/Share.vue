@@ -18,14 +18,16 @@
 import { computed, defineComponent } from "vue";
 import { useRouter } from "vue-router";
 
-import { store, useStore } from "../store";
+import { useState, useStore } from "../store";
 
 export default defineComponent({
   setup() {
-    const { state } = useStore();
+    const { session, auth } = useState();
+    const store = useStore();
+
     const router = useRouter();
 
-    if (!state.auth.isAuthenticated) {
+    if (!auth.isAuthenticated) {
       router.push({ name: "Login" });
       return;
     }
@@ -33,8 +35,8 @@ export default defineComponent({
     store.dispatch("fetchSession");
 
     return {
-      sessionState: computed(() => state.session),
-      loading: computed(() => state.session.loading && !state.session.session),
+      sessionState: computed(() => session),
+      loading: computed(() => session.loading && !session.session),
     };
   },
 });

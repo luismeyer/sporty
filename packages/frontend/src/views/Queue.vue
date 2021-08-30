@@ -28,7 +28,7 @@
 import { computed, defineComponent } from "vue";
 import { useRouter } from "vue-router";
 
-import { store, useStore } from "../store";
+import { useState, useStore } from "../store";
 
 import Track from "../components/Track.vue";
 import Reload from "../components/Reload.vue";
@@ -40,11 +40,12 @@ export default defineComponent({
   },
 
   setup() {
-    const { state } = useStore();
+    const { queue, user, auth } = useState();
+    const store = useStore();
 
     const router = useRouter();
 
-    if (!state.auth.isAuthenticated) {
+    if (!auth.isAuthenticated) {
       router.push({ name: "Login" });
       return;
     }
@@ -52,13 +53,11 @@ export default defineComponent({
     store.dispatch("fetchUser");
 
     return {
-      queueState: computed(() => state.queue),
-      user: computed(() => state.user.user),
-      loading: computed(() => state.queue.loading || state.user.loading),
+      queueState: computed(() => queue),
+      user: computed(() => user.user),
+      loading: computed(() => queue.loading || user.loading),
       initialLoading: computed(
-        () =>
-          (state.queue.loading && !state.queue.queue) ||
-          (state.user.loading && !state.user.user)
+        () => (queue.loading && !queue.queue) || (user.loading && !user.user)
       ),
 
       remove: (id: string) => store.dispatch("removeSongFromQueue", id),

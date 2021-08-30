@@ -36,6 +36,9 @@ export default defineComponent({
   setup(props) {
     let timer: number | undefined;
 
+    // Initially load data
+    props.load();
+
     const scrollTop = () => {
       window.scrollTo({ top: 0 });
     };
@@ -65,8 +68,6 @@ export default defineComponent({
 
     onMounted(async () => {
       scrollTop();
-
-      await props.load();
 
       window.addEventListener("beforeunload", scrollTop);
 

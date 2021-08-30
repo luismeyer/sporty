@@ -15,6 +15,10 @@ export type RootState = {
 
 export const storeKey: InjectionKey<Store<RootState>> = Symbol();
 
+export const useState = (): RootState => {
+  return baseUseStore(storeKey).state;
+};
+
 export const useStore = (): Store<RootState> => {
   return baseUseStore(storeKey);
 };

@@ -18,10 +18,11 @@ export const authModule: Module<AuthState, RootState> = {
   },
 
   mutations: {
-    login(state, url) {
+    LOGIN(state, url) {
       state.loginUrl = url;
     },
-    authorize(state) {
+
+    AUTHORIZE(state) {
       state.isAuthenticated = true;
     },
   },
@@ -31,7 +32,7 @@ export const authModule: Module<AuthState, RootState> = {
       const res = await fetchApi<LoginResponse>("user/login");
 
       if (res.success) {
-        commit("login", res.body.url);
+        commit("LOGIN", res.body.url);
       }
     },
 
@@ -47,7 +48,7 @@ export const authModule: Module<AuthState, RootState> = {
 
       localStorage.setItem(storageKey, res.body.token);
 
-      commit("authorize");
+      commit("AUTHORIZE");
     },
   },
 };

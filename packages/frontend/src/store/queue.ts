@@ -17,30 +17,30 @@ export const queueModule: Module<QueueState, RootState> = {
   },
 
   mutations: {
-    updateQueue(state, queue: Queue) {
+    UPDATE_QUEUE(state, queue: Queue) {
       state.queue = queue;
     },
 
-    updateLoading(state, newState: boolean) {
+    UPDATE_QUEUE_LOADING(state, newState: boolean) {
       state.loading = newState;
     },
   },
 
   actions: {
     async fetchQueue({ commit }) {
-      commit("updateLoading", true);
+      commit("UPDATE_QUEUE_LOADING", true);
 
       const response = await fetchApi<QueueResponse>("queue");
 
       if (response.success) {
-        commit("updateQueue", response.body.queue);
+        commit("UPDATE_QUEUE", response.body.queue);
       }
 
-      commit("updateLoading", false);
+      commit("UPDATE_QUEUE_LOADING", false);
     },
 
     async addSongToQueue({ commit }, id: string) {
-      commit("updateLoading", true);
+      commit("UPDATE_QUEUE_LOADING", true);
 
       const response = await fetchApi<QueueResponse>(
         "queue/add",
@@ -48,14 +48,14 @@ export const queueModule: Module<QueueState, RootState> = {
       );
 
       if (response.success) {
-        commit("updateQueue", response.body.queue);
+        commit("UPDATE_QUEUE", response.body.queue);
       }
 
-      commit("updateLoading", false);
+      commit("UPDATE_QUEUE_LOADING", false);
     },
 
     async removeSongFromQueue({ commit }, id: string) {
-      commit("updateLoading", true);
+      commit("UPDATE_QUEUE_LOADING", true);
 
       const response = await fetchApi<QueueResponse>(
         "queue/remove",
@@ -63,10 +63,10 @@ export const queueModule: Module<QueueState, RootState> = {
       );
 
       if (response.success) {
-        commit("updateQueue", response.body.queue);
+        commit("UPDATE_QUEUE", response.body.queue);
       }
 
-      commit("updateLoading", false);
+      commit("UPDATE_QUEUE_LOADING", false);
     },
   },
 };

@@ -37,7 +37,8 @@ import Track from "../components/Track.vue";
 import Spinner from "../components/Spinner.vue";
 
 import { useFetchSearch } from "../hooks/use-fetch-search";
-import { store, useStore } from "../store";
+import { useState } from "../store";
+import { useStore } from "vuex";
 
 export default defineComponent({
   components: {
@@ -46,11 +47,12 @@ export default defineComponent({
   },
 
   setup() {
-    const { state } = useStore();
+    const { auth } = useState();
+    const store = useStore();
 
     const router = useRouter();
 
-    if (!state.auth.isAuthenticated) {
+    if (!auth.isAuthenticated) {
       router.push({ name: "Login" });
       return;
     }

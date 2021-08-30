@@ -8,29 +8,30 @@
 import { defineComponent, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
-import { store, useStore } from "../store";
+import { useState, useStore } from "../store";
 
 export default defineComponent({
   setup() {
-    const { state } = useStore();
+    const { auth, session } = useState();
+    const store = useStore();
 
     const router = useRouter();
     const route = useRoute();
 
-    if (!state.auth.isAuthenticated) {
+    if (!auth.isAuthenticated) {
       router.push({ name: "Login" });
       return;
     }
 
-    const { session } = route.query;
+    const { session: sessionId } = route.query;
 
-    if (!session) {
+    if (!sessionId) {
       router.push({ name: "Session" });
       return;
     }
 
     watchEffect(() => {
-      if (!state.session.session) {
+      if (!session.session) {
         return;
       }
 

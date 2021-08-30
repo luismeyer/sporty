@@ -15,7 +15,7 @@
       <ul>
         <User
           v-for="user in sessionState.session.users"
-          v-bind:key="user.name"
+          :key="user.name"
           :user="user"
         />
       </ul>
@@ -35,7 +35,7 @@ import { useRouter } from "vue-router";
 import User from "../components/User.vue";
 import Reload from "../components/Reload.vue";
 
-import { store, useStore } from "../store";
+import { useState, useStore } from "../store";
 
 export default defineComponent({
   components: {
@@ -44,11 +44,13 @@ export default defineComponent({
   },
 
   setup() {
-    const { state } = useStore();
+    const { session, auth } = useState();
+    const store = useStore();
+
     const router = useRouter();
 
     onMounted(() => {
-      if (!state.auth.isAuthenticated) {
+      if (!auth.isAuthenticated) {
         router.push({ name: "Login" });
       }
     });
@@ -57,8 +59,8 @@ export default defineComponent({
       handleCreate: () => store.dispatch("createSession"),
       handleLeave: () => store.dispatch("leaveSession"),
       fetch: () => store.dispatch("fetchSession"),
-      sessionState: computed(() => state.session),
-      loading: computed(() => !state.session.session && state.session.loading),
+      sessionState: computed(() => session),
+      loading: computed(() => !session.session && session.loading),
     };
   },
 });

@@ -29,14 +29,14 @@
 import { computed, defineComponent, ref } from "vue";
 import { useRouter } from "vue-router";
 
-import { store, useStore } from "../store";
+import { store, useState } from "../store";
 
 export default defineComponent({
   setup() {
-    const { state } = useStore();
+    const { user, auth } = useState();
     const router = useRouter();
 
-    if (!state.auth.isAuthenticated) {
+    if (!auth.isAuthenticated) {
       router.push({ name: "Login" });
       return;
     }
@@ -48,8 +48,8 @@ export default defineComponent({
 
     return {
       leaving,
-      user: computed(() => state.user.user),
-      loading: computed(() => state.user.loading && !state.user.user),
+      user: computed(() => user.user),
+      loading: computed(() => user.loading && !user.user),
 
       toggleIsPlayer: () => store.dispatch("toggleIsPlayer"),
       handleLeave() {

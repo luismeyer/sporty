@@ -11,47 +11,49 @@ export type SessionState = {
 };
 
 export const sessionModule: Module<SessionState, RootState> = {
+  namespaced: true,
+
   state: {
     loading: false,
   },
 
   mutations: {
-    updateSession(state, session: Session) {
+    UPDATE_SESSION(state, session: Session) {
       state.session = session;
     },
 
-    updateLoading(state, value) {
+    UPDATE_SESSION_LOADING(state, value) {
       state.loading = value;
     },
   },
 
   actions: {
     async fetchSession({ commit }) {
-      commit("updateLoading", true);
+      commit("UPDATE_SESSION_LOADING", true);
 
       const response = await fetchApi<SessionResponse>("session");
 
       if (response.success) {
-        commit("updateSession", response.body);
+        commit("UPDATE_SESSION", response.body);
       }
 
-      commit("updateLoading", false);
+      commit("UPDATE_SESSION_LOADING", false);
     },
 
     async createSession({ commit }) {
-      commit("updateLoading", true);
+      commit("UPDATE_SESSION_LOADING", true);
 
       const response = await fetchApi<SessionResponse>("session/create");
 
       if (response.success) {
-        commit("updateSession", response.body);
+        commit("UPDATE_SESSION", response.body);
       }
 
-      commit("updateLoading", false);
+      commit("UPDATE_SESSION_LOADING", false);
     },
 
     async leaveSession({ commit, state }) {
-      commit("updateLoading", true);
+      commit("UPDATE_SESSION_LOADING", true);
 
       if (!state.session) {
         return;
@@ -60,15 +62,15 @@ export const sessionModule: Module<SessionState, RootState> = {
       const response = await fetchApi<MessageResponse>("session/leave");
 
       if (response.success) {
-        commit("updateSession", undefined);
+        commit("UPDATE_SESSION", undefined);
         state.session = undefined;
       }
 
-      commit("updateLoading", false);
+      commit("UPDATE_SESSION_LOADING", false);
     },
 
     async joinSession({ commit }, session: string) {
-      commit("updateLoading", true);
+      commit("UPDATE_SESSION_LOADING", true);
 
       const response = await fetchApi<SessionResponse>(
         "session/join",
@@ -76,10 +78,10 @@ export const sessionModule: Module<SessionState, RootState> = {
       );
 
       if (response.success) {
-        commit("updateSession", response.body);
+        commit("UPDATE_SESSION", response.body);
       }
 
-      commit("updateLoading", false);
+      commit("UPDATE_SESSION_LOADING", false);
     },
   },
 };

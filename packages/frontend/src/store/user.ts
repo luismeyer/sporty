@@ -16,37 +16,37 @@ export const userModule: Module<UserState, RootState> = {
   },
 
   mutations: {
-    updateUser(state, newUser: FrontendUser) {
+    UPDATE_USER(state, newUser: FrontendUser) {
       state.user = newUser;
     },
 
-    updateLoading(state, newState: boolean) {
+    UPDATE_USER_LOADING(state, newState: boolean) {
       state.loading = newState;
     },
   },
 
   actions: {
     async fetchUser({ commit }) {
-      commit("updateLoading", true);
+      commit("UPDATE_USER_LOADING", true);
 
       const response = await fetchApi<UserResponse>("user");
 
       if (response.success) {
-        commit("updateUser", response.body);
+        commit("UPDATE_USER", response.body);
       }
 
-      commit("updateLoading", false);
+      commit("UPDATE_USER_LOADING", false);
     },
 
     async toggleIsPlayer({ commit }) {
-      commit("updateLoading", true);
+      commit("UPDATE_USER_LOADING", true);
       const response = await fetchApi<UserResponse>("user/player");
 
       if (response.success) {
-        commit("updateUser", response.body);
+        commit("UPDATE_USER", response.body);
       }
 
-      commit("updateLoading", false);
+      commit("UPDATE_USER_LOADING", false);
     },
   },
 };
