@@ -37,8 +37,7 @@ import Track from "../components/Track.vue";
 import Spinner from "../components/Spinner.vue";
 
 import { useFetchSearch } from "../hooks/use-fetch-search";
-import { useState } from "../store";
-import { useStore } from "vuex";
+import { useState, useStore } from "../store";
 
 export default defineComponent({
   components: {
