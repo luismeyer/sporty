@@ -1,9 +1,5 @@
 <template>
-  <li
-    @click="handleClick"
-    class="track"
-    v-bind:class="[{ addLoading: loading }]"
-  >
+  <li @click="handleClick" class="track" v-bind:class="{ disabled }">
     <img
       class="song-image"
       :src="track.image.url"
@@ -51,33 +47,49 @@
 </template>
 
 <script lang="ts">
-import { FrontendUser, Track } from "@qify/api";
-import { defineComponent, PropType } from "vue";
+import { defineComponent, PropType, ref } from "vue";
 
-type ActionType = (id: string) => Promise<void>;
+import { FrontendUser, Track } from "@qify/api";
 
 export default defineComponent({
   props: {
-    track: Object as PropType<Track>,
-    user: Object as PropType<FrontendUser>,
-    iconName: String as PropType<"add" | "remove">,
-    action: Function as PropType<ActionType>,
+    track: {
+      required: true,
+      type: Object as PropType<Track>,
+    },
+    user: {
+      required: false,
+      type: Object as PropType<FrontendUser>,
+    },
+    iconName: {
+      required: true,
+      type: String as PropType<"add" | "remove">,
+    },
+    action: {
+      required: false,
+      type: Function as PropType<(id: string) => Promise<void>>,
+    },
   },
-  data() {
-    return {
-      loading: false,
-    };
-  },
-  methods: {
-    async handleClick() {
-      if (!this.action || !this.track) {
+
+  setup(props) {
+    const disabled = ref(false);
+
+    const handleClick = async () => {
+      if (disabled.value || !props.action || !props.track) {
         return;
       }
 
-      this.loading = true;
-      await this.action(this.track.id);
-      this.loading = false;
-    },
+      disabled.value = true;
+
+      await props.action(props.track.id);
+
+      disabled.value = false;
+    };
+
+    return {
+      disabled,
+      handleClick,
+    };
   },
 });
 </script>
@@ -137,7 +149,7 @@ button {
   border-radius: 50%;
 }
 
-.addLoading {
+.disabled {
   opacity: 0.5;
 }
 </style>

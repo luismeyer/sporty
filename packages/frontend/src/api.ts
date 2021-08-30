@@ -1,4 +1,4 @@
-import { storageKey } from "./stores/auth";
+import { storageKey } from "./store/auth";
 
 const apiUrl =
   process.env.NODE_ENV === "development"

@@ -50,6 +50,10 @@ export const authorizeRequest = async (
 
   const [_, token] = authorization.split(" ");
 
+  if (!token) {
+    return;
+  }
+
   return getItem(token);
 };
 

@@ -63,14 +63,18 @@ export const addSong: RequestHandler<unknown, QueueResponse, unknown, Query> =
     // Append Item
     await updateItem(user.id, {
       expressionAttributeNames: { "#queue": "queue" },
-      expressionAttributeValues: { ":queue": updateUser.queue },
-      updateExpression: "SET #queue = :queue",
+      expressionAttributeValues: {
+        ":new_item": [songId],
+        ":empty_list": [],
+      },
+      updateExpression:
+        "SET #queue = list_append(if_not_exists(#queue, :empty_list), :new_item)",
     });
 
     res.json({
       success: true,
       body: {
-        queue: await generateQueue(user),
+        queue: await generateQueue(updateUser),
       },
     });
   };

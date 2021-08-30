@@ -1,21 +1,23 @@
 <template>
   <div class="container-with-reloader">
-    <Reload :reload="refreshQueue" v-bind:additionalLoading="loading" />
+    <Reload :load="refreshQueue" :loading="loading" />
 
     <h1>Your Queue</h1>
 
-    <div v-if="loading || queueState.queue?.length === 0" class="empty">
-      <span>is {{ loading ? "loading..." : "empty... add something" }} </span>
+    <div v-if="initialLoading || queueState.queue?.length === 0" class="empty">
+      <span>
+        is {{ initialLoading ? "loading..." : "empty... add something" }}
+      </span>
       <img src="../assets/queue.png" />
     </div>
 
     <ul v-else>
       <Track
-        v-for="item in queueState.queue"
-        :action="userState.user.name === item.user.name ? remove : undefined"
-        :track="item.track"
-        :user="item.user"
-        :key="item.id"
+        v-for="track in queueState.queue"
+        :key="track.id"
+        :track="track.track"
+        :action="user.name === track.user.name ? remove : undefined"
+        :user="track.user"
         icon-name="remove"
       />
     </ul>
@@ -23,11 +25,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { computed, defineComponent } from "vue";
+import { useRouter } from "vue-router";
 
-import { authStore } from "../stores/auth";
-import { QueueStore, queueStore } from "../stores/queue";
-import { UserStore, userStore } from "../stores/user";
+import { store, useStore } from "../store";
 
 import Track from "../components/Track.vue";
 import Reload from "../components/Reload.vue";
@@ -38,38 +39,31 @@ export default defineComponent({
     Reload,
   },
 
-  data() {
-    return {
-      queueState: queueStore.state,
-      userState: userStore.state,
-    };
-  },
+  setup() {
+    const { state } = useStore();
 
-  computed: {
-    loading() {
-      const queueState = this.queueState as QueueStore["state"];
-      const userState = this.userState as UserStore["state"];
+    const router = useRouter();
 
-      return !queueState.queue || (userState.loading && !userState.user);
-    },
-  },
-
-  methods: {
-    async remove(id: string) {
-      await queueStore.removeSong(id);
-    },
-
-    async refreshQueue() {
-      await queueStore.fetch();
-    },
-  },
-
-  async mounted() {
-    if (!authStore.state.isAuthenticated) {
-      this.$router.push({ name: "Login" });
+    if (!state.auth.isAuthenticated) {
+      router.push({ name: "Login" });
+      return;
     }
 
-    await userStore.fetch();
+    store.dispatch("fetchUser");
+
+    return {
+      queueState: computed(() => state.queue),
+      user: computed(() => state.user.user),
+      loading: computed(() => state.queue.loading || state.user.loading),
+      initialLoading: computed(
+        () =>
+          (state.queue.loading && !state.queue.queue) ||
+          (state.user.loading && !state.user.user)
+      ),
+
+      remove: (id: string) => store.dispatch("removeSongFromQueue", id),
+      refreshQueue: () => store.dispatch("fetchQueue"),
+    };
   },
 });
 </script>
@@ -91,6 +85,7 @@ ul {
   justify-items: start;
   padding: 0;
   list-style: none;
+  padding: 0 0 80px;
 }
 
 img {

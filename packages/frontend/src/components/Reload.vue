@@ -1,11 +1,17 @@
 <template>
-  <div class="reload" @click="handleLoad">
+  <div class="reload">
     <Spinner :spinning="true" />
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
+import {
+  defineComponent,
+  onMounted,
+  onUnmounted,
+  PropType,
+  watchEffect,
+} from "vue";
 
 import Spinner from "./Spinner.vue";
 
@@ -17,93 +23,69 @@ export default defineComponent({
   },
 
   props: {
-    reload: {
+    load: {
       required: true,
       type: Function as PropType<() => Promise<void>>,
     },
-    additionalLoading: Boolean,
+    loading: {
+      required: true,
+      type: Boolean,
+    },
   },
 
-  data() {
-    return {
-      loading: false,
-      timer: 0,
+  setup(props) {
+    let timer: number | undefined;
+
+    const scrollTop = () => {
+      window.scrollTo({ top: 0 });
     };
-  },
 
-  async mounted() {
-    this.scrollTop();
+    const scrollToContent = () => {
+      window.scrollTo({ top: SPINNER_HEIGHT, behavior: "smooth" });
+    };
 
-    await this.handleLoad();
+    const handleScroll = async () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
 
-    if (!this.additionalLoading) {
-      this.scrollToContent();
-    }
+      timer = setTimeout(async () => {
+        if (window.scrollY <= SPINNER_HEIGHT && window.scrollY > 0) {
+          scrollToContent();
+          return;
+        }
 
-    window.addEventListener("beforeunload", this.scrollTop);
+        if (window.scrollY !== 0) {
+          return;
+        }
 
-    window.addEventListener("scroll", this.handleScroll);
-  },
+        props.load();
+      }, 500);
+    };
 
-  unmounted() {
-    window.removeEventListener("beforeunload", this.scrollTop);
+    onMounted(async () => {
+      scrollTop();
 
-    window.removeEventListener("scroll", this.handleScroll);
-  },
+      await props.load();
 
-  watch: {
-    additionalLoading() {
-      this.handleLoadingUpdate();
-    },
+      window.addEventListener("beforeunload", scrollTop);
 
-    loading() {
-      this.handleLoadingUpdate();
-    },
-  },
+      window.addEventListener("scroll", handleScroll, false);
+    });
 
-  methods: {
-    handleLoadingUpdate() {
-      if (this.loading || this.additionalLoading) {
+    onUnmounted(() => {
+      window.removeEventListener("beforeunload", scrollTop);
+
+      window.removeEventListener("scroll", handleScroll);
+    });
+
+    watchEffect(() => {
+      if (props.loading) {
         return;
       }
 
-      this.scrollToContent();
-    },
-
-    scrollTop() {
-      window.scrollTo({ top: 0 });
-    },
-
-    scrollToContent() {
-      window.scrollTo({ top: SPINNER_HEIGHT, behavior: "smooth" });
-    },
-
-    async handleLoad() {
-      this.loading = true;
-      await this.reload();
-      this.loading = false;
-    },
-
-    async handleScroll() {
-      if (this.timer !== null) {
-        clearTimeout(this.timer);
-      }
-
-      this.timer = setTimeout(async () => {
-        if (window.scrollY <= SPINNER_HEIGHT && window.scrollY > 0) {
-          this.scrollToContent();
-          return;
-        }
-
-        if (window.scrollY > 0) {
-          return;
-        }
-
-        this.loading = true;
-        await this.reload();
-        this.loading = false;
-      }, 150);
-    },
+      scrollToContent();
+    });
   },
 });
 </script>

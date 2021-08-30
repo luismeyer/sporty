@@ -42,21 +42,24 @@ const itemsInQueue = (users: User[]): boolean => {
   return users.some((user) => user.queue.length > 0);
 };
 
-export const generateQueue = async (user: User): Promise<Queue> => {
-  if (!user.session) {
-    const transformedUser = await transformUser(user);
+export const generateQueue = async (currentUser: User): Promise<Queue> => {
+  if (!currentUser.session) {
+    const transformedUser = await transformUser(currentUser);
 
     return Promise.all(
-      user.queue.map(async (id) => ({
-        track: await generateTrack(user, id),
+      currentUser.queue.map(async (id) => ({
+        track: await generateTrack(currentUser, id),
         user: transformedUser,
       }))
     );
   }
 
-  const usersResponse = await sessionUsers(user.session);
+  // Replace the current user in the user response so the updated queue is used
+  const usersResponse = await sessionUsers(currentUser.session).then((res) =>
+    res.map((user) => (user.id === currentUser.id ? currentUser : user))
+  );
 
-  // Save frontend users in map so we don't request user infor for every transformed song
+  // Save frontend users in map so we don't make a spotify request for every transformed song
   const users = await Promise.all(
     usersResponse.map(async (user) => ({
       user,

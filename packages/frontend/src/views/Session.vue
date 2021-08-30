@@ -1,6 +1,6 @@
 <template>
   <div class="container-with-reloader">
-    <Reload :reload="refresh" />
+    <Reload :load="fetch" :loading="sessionState.loading" />
 
     <div class="headline">
       <h1>Session</h1>
@@ -29,13 +29,13 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { computed, defineComponent, onMounted } from "vue";
+import { useRouter } from "vue-router";
 
 import User from "../components/User.vue";
 import Reload from "../components/Reload.vue";
 
-import { SessionStore, sessionStore } from "../stores/session";
-import { authStore } from "../stores/auth";
+import { store, useStore } from "../store";
 
 export default defineComponent({
   components: {
@@ -43,40 +43,23 @@ export default defineComponent({
     Reload,
   },
 
-  data() {
+  setup() {
+    const { state } = useStore();
+    const router = useRouter();
+
+    onMounted(() => {
+      if (!state.auth.isAuthenticated) {
+        router.push({ name: "Login" });
+      }
+    });
+
     return {
-      sessionState: sessionStore.state,
-      authState: authStore.state,
+      handleCreate: () => store.dispatch("createSession"),
+      handleLeave: () => store.dispatch("leaveSession"),
+      fetch: () => store.dispatch("fetchSession"),
+      sessionState: computed(() => state.session),
+      loading: computed(() => !state.session.session && state.session.loading),
     };
-  },
-
-  computed: {
-    loading(): boolean {
-      const state = this.sessionState as SessionStore["state"];
-      return !state.session && state.loading;
-    },
-  },
-
-  methods: {
-    async handleCreate() {
-      await sessionStore.create();
-    },
-
-    async handleLeave() {
-      await sessionStore.leave();
-    },
-
-    async refresh() {
-      await sessionStore.fetch();
-    },
-  },
-
-  async mounted() {
-    if (!this.authState.isAuthenticated) {
-      this.$router.push({ name: "Login" });
-    }
-
-    await sessionStore.fetch();
   },
 });
 </script>

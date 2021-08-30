@@ -13,11 +13,11 @@
         <button class="leave" @click="handleLeave">leave</button>
       </div>
 
-      <div class="setting">
+      <div v-if="user" class="setting">
         <label>Toggle your Spotify player</label>
         <input
           type="checkbox"
-          :checked="userState.user?.isPlayer"
+          :checked="user.isPlayer"
           @change="toggleIsPlayer"
         />
       </div>
@@ -26,46 +26,38 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import { authStore } from "../stores/auth";
-import { sessionStore } from "../stores/session";
-import { UserStore, userStore } from "../stores/user";
+import { computed, defineComponent, ref } from "vue";
+import { useRouter } from "vue-router";
+
+import { store, useStore } from "../store";
 
 export default defineComponent({
-  data() {
-    return {
-      userState: userStore.state,
-      leaving: false,
-    };
-  },
+  setup() {
+    const { state } = useStore();
+    const router = useRouter();
 
-  computed: {
-    loading(): boolean {
-      const userState = this.userState as UserStore["state"];
-
-      return !userState.user && userState.loading;
-    },
-  },
-
-  async mounted() {
-    if (!authStore.state.isAuthenticated) {
-      this.$router.push({ name: "Login" });
+    if (!state.auth.isAuthenticated) {
+      router.push({ name: "Login" });
+      return;
     }
 
-    await Promise.all([sessionStore.fetch(), userStore.fetch()]);
-  },
+    store.dispatch("fetchSession");
+    store.dispatch("fetchUser");
 
-  methods: {
-    async handleLeave() {
-      this.leaving = true;
+    const leaving = ref(false);
 
-      await sessionStore.leave();
+    return {
+      leaving,
+      user: computed(() => state.user.user),
+      loading: computed(() => state.user.loading && !state.user.user),
 
-      this.$router.push({ name: "Session" });
-    },
-    async toggleIsPlayer() {
-      await userStore.toggleIsPlayer();
-    },
+      toggleIsPlayer: () => store.dispatch("toggleIsPlayer"),
+      handleLeave() {
+        leaving.value = true;
+        store.dispatch("leaveSession");
+        router.push({ name: "Session" });
+      },
+    };
   },
 });
 </script>

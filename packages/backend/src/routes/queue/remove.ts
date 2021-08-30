@@ -40,16 +40,14 @@ export const removeSong: RequestHandler<any, QueueResponse, any, Query> =
       });
     }
 
-    const newUser = {
-      ...user,
-      queue: user.queue.filter((song) => song !== songId),
-    };
+    const songIndex = user.queue.findIndex((track) => track === songId);
+
+    user.queue.splice(songIndex, 1);
 
     // Remove song from Queue
     await updateItem(user.id, {
       expressionAttributeNames: { "#queue": "queue" },
-      expressionAttributeValues: { ":queue": newUser.queue },
-      updateExpression: "SET #queue = :queue",
+      updateExpression: `REMOVE #queue[${songIndex}]`,
     });
 
     res.json({

@@ -5,29 +5,34 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import { authStore } from "../stores/auth";
+import { defineComponent, watchEffect } from "vue";
+import { useRoute, useRouter } from "vue-router";
+
+import { store, useStore } from "../store";
 
 export default defineComponent({
-  components: {},
-  data() {
-    return authStore.state;
-  },
-  async mounted() {
-    const { code } = this.$route.query;
+  setup() {
+    const { state } = useStore();
 
-    if (!code || typeof code !== "string") {
-      this.$router.push({ name: "Session" });
+    const router = useRouter();
+    const route = useRoute();
+
+    const { code } = route.query;
+
+    if (!code) {
+      router.push({ name: "Session" });
       return;
-    }
-
-    const token = await authStore.authorize(code);
-
-    if (token) {
-      this.$router.push({ name: "Session" });
     } else {
-      this.$router.push({ name: "Login" });
+      store.dispatch("authorize", code);
     }
+
+    watchEffect(() => {
+      if (state.auth.isAuthenticated) {
+        router.push({ name: "Session" });
+      } else {
+        router.push({ name: "Login" });
+      }
+    });
   },
 });
 </script>

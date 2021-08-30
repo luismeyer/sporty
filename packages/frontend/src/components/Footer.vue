@@ -33,12 +33,16 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import { authStore } from "../stores/auth";
+import { computed, defineComponent } from "vue";
+import { useStore } from "../store";
 
 export default defineComponent({
-  data() {
-    return authStore.state;
+  setup() {
+    const { state } = useStore();
+
+    return {
+      isAuthenticated: computed(() => state.auth.isAuthenticated),
+    };
   },
 });
 </script>
@@ -46,7 +50,7 @@ export default defineComponent({
 <style scoped>
 .footer-container {
   width: 100vw;
-  padding: 12px;
+  padding: 16px 0px;
   position: fixed;
   bottom: 0;
   left: 0;

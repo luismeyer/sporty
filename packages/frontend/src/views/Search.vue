@@ -10,31 +10,34 @@
         type="text"
         placeholder="Spotify input"
       />
-      <Spinner class="loading" size="40" :spinning="isLoading" color="black" />
+      <Spinner class="loading" size="40" :spinning="loading" color="black" />
     </div>
 
     <img v-if="searchResults.length === 0" src="../assets/search.png" />
 
     <ul>
-      <li v-for="track in searchResults" :key="track.id">
-        <Track :track="track" v-bind:action="add" icon-name="add" />
-      </li>
+      <Track
+        v-for="track in searchResults"
+        :key="track.id"
+        :track="track"
+        :action="add"
+        icon-name="add"
+      />
     </ul>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, onMounted, ref, watchEffect } from "vue";
+import { useRouter } from "vue-router";
 
-import { SearchResponse, Track as TrackType } from "@qify/api";
-
-import { authStore } from "../stores/auth";
-import { queueStore } from "../stores/queue";
+import { Track as TrackType } from "@qify/api";
 
 import Track from "../components/Track.vue";
 import Spinner from "../components/Spinner.vue";
 
-import { fetchApi } from "../api";
+import { useFetchSearch } from "../hooks/use-fetch-search";
+import { store, useStore } from "../store";
 
 export default defineComponent({
   components: {
@@ -42,71 +45,53 @@ export default defineComponent({
     Track,
   },
 
-  data() {
-    return {
-      auth: authStore.state,
-      query: "",
-      searchResults: [] as TrackType[],
-      isLoading: false,
-    };
-  },
+  setup() {
+    const { state } = useStore();
 
-  mounted() {
-    if (!this.auth.isAuthenticated) {
-      this.$router.push({ name: "Login" });
+    const router = useRouter();
+
+    if (!state.auth.isAuthenticated) {
+      router.push({ name: "Login" });
+      return;
     }
 
-    const input = this.$refs.queryInput as InstanceType<
-      typeof HTMLInputElement
-    >;
+    const searchResults = ref([] as TrackType[]);
+    const queryInput = ref<HTMLInputElement>();
+    const query = ref("");
 
-    input.focus();
-  },
+    const { loading, fetchSearch } = useFetchSearch(query, searchResults);
 
-  watch: {
-    async query() {
-      if (this.query.length <= 3) {
+    watchEffect(() => {
+      const { value } = query;
+
+      if (value.length <= 3) {
         return;
       }
 
-      const length = this.query.length;
+      const length = query.value.length;
 
       setTimeout(async () => {
-        if (length !== this.query.length || this.isLoading) {
+        if (loading.value || length !== value.length) {
           return;
         }
 
-        await this.fetchSearch();
-      }, 1000);
-    },
-  },
+        fetchSearch();
+      }, 500);
+    });
 
-  methods: {
-    async handleSubmit() {
-      if (this.isLoading) {
-        return;
-      }
+    onMounted(() => {
+      const input = queryInput.value;
+      input?.focus();
+    });
 
-      await this.fetchSearch();
-    },
-
-    async add(id: string) {
-      await queueStore.addSong(id);
-    },
-
-    async fetchSearch() {
-      this.isLoading = true;
-      const result = await fetchApi<SearchResponse>(
-        "search",
-        `query=${this.query}`
-      );
-
-      if (result.success) {
-        this.searchResults = result.body.tracks;
-      }
-
-      this.isLoading = false;
-    },
+    return {
+      query,
+      loading,
+      searchResults,
+      queryInput,
+      handleSubmit: () => !loading.value && fetchSearch(),
+      add: (id: string) => store.dispatch("addSongToQueue", id),
+    };
   },
 });
 </script>

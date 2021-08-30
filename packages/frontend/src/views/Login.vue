@@ -6,15 +6,27 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import { authStore } from "../stores/auth";
+import { defineComponent, watchEffect } from "vue";
+
+import { useStore } from "../store";
 
 export default defineComponent({
-  methods: {
-    async login() {
-      const url = await authStore.login();
-      window.open(url, "_self");
-    },
+  setup() {
+    const store = useStore();
+
+    watchEffect(() => {
+      const { loginUrl } = store.state.auth;
+
+      if (!loginUrl) {
+        return;
+      }
+
+      window.open(loginUrl, "_self");
+    });
+
+    return {
+      login: () => store.dispatch("login"),
+    };
   },
 });
 </script>
