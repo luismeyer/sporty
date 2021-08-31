@@ -35,6 +35,11 @@ const setTokens = (user: UserInput) => {
   spotify.setRefreshToken(user.refreshToken);
 };
 
+const clearTokens = () => {
+  spotify.setAccessToken("");
+  spotify.setRefreshToken("");
+};
+
 export const refreshTokens = async (user: UserInput): Promise<UserInput> => {
   const result = await spotify.refreshAccessToken();
 
@@ -57,12 +62,17 @@ export const callSpotify = async <T>(
 ): Promise<T> => {
   setTokens(user);
 
-  return fc().catch(async (error) => {
+  const result = await fc().catch(async (error) => {
+    console.log("Spotify error", error);
+
     const newCreds = await refreshTokens(user);
     setTokens(newCreds);
 
     return fc();
   });
+
+  clearTokens();
+  return result;
 };
 
 export const createUri = (id: string) => `spotify:track:${id}`;

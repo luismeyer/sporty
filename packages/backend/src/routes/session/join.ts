@@ -26,7 +26,7 @@ export const joinSession: RequestHandler<
     return res.json({ success: false, error: "Missing session" });
   }
 
-  const session = await getItem<Session>(sessionId);
+  const session = await getItem<Session>(String(sessionId));
 
   if (!session) {
     return res.json({
@@ -58,7 +58,7 @@ export const joinSession: RequestHandler<
     },
     expressionAttributeValues: {
       ":isOwner": false,
-      ":session": session,
+      ":session": session.id,
     },
     updateExpression: "SET #isOwner = :isOwner, #session = :session",
   });

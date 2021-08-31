@@ -15,7 +15,7 @@ export default defineComponent({
     const store = useStore();
 
     watchEffect(() => {
-      const { loginUrl } = store.state.auth;
+      const { loginUrl } = store.state.user;
 
       if (!loginUrl) {
         return;

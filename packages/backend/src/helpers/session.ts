@@ -51,7 +51,10 @@ export const transformSession = async (
 ): Promise<FrontendSession> => {
   const url = frontendUrl + `/join?session=${session.id}`;
 
-  const svg = await qrcode.toString(url, { type: "svg", margin: 2 });
+  const svg = await qrcode.toString(url, {
+    type: "svg",
+    margin: 1.5,
+  });
   const qrCode = svgToDataURL(svg);
 
   return {

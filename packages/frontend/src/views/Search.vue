@@ -29,7 +29,6 @@
 
 <script lang="ts">
 import { defineComponent, onMounted, ref, watchEffect } from "vue";
-import { useRouter } from "vue-router";
 
 import { Track as TrackType } from "@qify/api";
 
@@ -37,7 +36,7 @@ import Track from "../components/Track.vue";
 import Spinner from "../components/Spinner.vue";
 
 import { useFetchSearch } from "../hooks/use-fetch-search";
-import { useState, useStore } from "../store";
+import { useStore } from "../store";
 
 export default defineComponent({
   components: {
@@ -46,15 +45,7 @@ export default defineComponent({
   },
 
   setup() {
-    const { auth } = useState();
     const store = useStore();
-
-    const router = useRouter();
-
-    if (!auth.isAuthenticated) {
-      router.push({ name: "Login" });
-      return;
-    }
 
     const searchResults = ref([] as TrackType[]);
     const queryInput = ref<HTMLInputElement>();

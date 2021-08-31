@@ -41,7 +41,7 @@ export default defineComponent({
     const state = useState();
 
     return {
-      isAuthenticated: computed(() => state.auth.isAuthenticated),
+      isAuthenticated: computed(() => state.user.isAuthenticated),
     };
   },
 });

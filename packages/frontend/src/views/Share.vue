@@ -16,21 +16,13 @@
 
 <script lang="ts">
 import { computed, defineComponent } from "vue";
-import { useRouter } from "vue-router";
 
 import { useState, useStore } from "../store";
 
 export default defineComponent({
   setup() {
-    const { session, auth } = useState();
+    const { session } = useState();
     const store = useStore();
-
-    const router = useRouter();
-
-    if (!auth.isAuthenticated) {
-      router.push({ name: "Login" });
-      return;
-    }
 
     store.dispatch("fetchSession");
 

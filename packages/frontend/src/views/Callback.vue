@@ -5,31 +5,39 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, watchEffect } from "vue";
+import { computed, defineComponent, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
-import { useState, useStore } from "../store";
+import { useStore } from "../store";
 
 export default defineComponent({
   setup() {
-    const { auth } = useState();
     const store = useStore();
 
     const router = useRouter();
     const route = useRoute();
 
-    const { code } = route.query;
+    onMounted(() => {
+      const { code } = route.query;
 
-    if (!code) {
-      router.push({ name: "Session" });
-      return;
-    } else {
-      store.dispatch("authorize", code);
-    }
-
-    watchEffect(() => {
-      if (auth.isAuthenticated) {
+      if (!code) {
         router.push({ name: "Session" });
+        return;
+      } else {
+        store.dispatch("authorize", code);
+      }
+    });
+
+    const isAuthenticated = computed(() => store.state.user.isAuthenticated);
+
+    watch(isAuthenticated, (newVal, oldVal) => {
+      if (newVal === oldVal) {
+        return;
+      }
+
+      if (newVal) {
+        router.push({ name: "Session" });
+        return;
       } else {
         router.push({ name: "Login" });
       }

@@ -63,7 +63,6 @@ export const sessionModule: Module<SessionState, RootState> = {
 
       if (response.success) {
         commit("UPDATE_SESSION", undefined);
-        state.session = undefined;
       }
 
       commit("UPDATE_SESSION_LOADING", false);

@@ -29,8 +29,7 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { computed, defineComponent } from "vue";
 
 import User from "../components/User.vue";
 import Reload from "../components/Reload.vue";
@@ -44,16 +43,8 @@ export default defineComponent({
   },
 
   setup() {
-    const { session, auth } = useState();
+    const { session } = useState();
     const store = useStore();
-
-    const router = useRouter();
-
-    onMounted(() => {
-      if (!auth.isAuthenticated) {
-        router.push({ name: "Login" });
-      }
-    });
 
     return {
       handleCreate: () => store.dispatch("createSession"),

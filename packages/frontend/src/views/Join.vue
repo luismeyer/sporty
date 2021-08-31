@@ -12,16 +12,11 @@ import { useState, useStore } from "../store";
 
 export default defineComponent({
   setup() {
-    const { auth, session } = useState();
+    const { session } = useState();
     const store = useStore();
 
     const router = useRouter();
     const route = useRoute();
-
-    if (!auth.isAuthenticated) {
-      router.push({ name: "Login" });
-      return;
-    }
 
     const { session: sessionId } = route.query;
 
@@ -38,7 +33,7 @@ export default defineComponent({
       router.push({ name: "Session" });
     });
 
-    store.dispatch("joinSession", session);
+    store.dispatch("joinSession", sessionId);
   },
 });
 </script>

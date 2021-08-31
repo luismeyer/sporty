@@ -33,13 +33,8 @@ import { store, useState } from "../store";
 
 export default defineComponent({
   setup() {
-    const { user, auth } = useState();
+    const { user } = useState();
     const router = useRouter();
-
-    if (!auth.isAuthenticated) {
-      router.push({ name: "Login" });
-      return;
-    }
 
     store.dispatch("fetchSession");
     store.dispatch("fetchUser");

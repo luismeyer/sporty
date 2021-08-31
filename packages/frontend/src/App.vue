@@ -6,23 +6,70 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import {
+  computed,
+  defineComponent,
+  onMounted,
+  onUnmounted,
+  watchEffect,
+} from "vue";
+import { useRoute, useRouter } from "vue-router";
 
 import Footer from "./components/Footer.vue";
+import { useStore } from "./store";
 
 export default defineComponent({
   components: {
     Footer,
   },
 
-  mounted() {
+  setup() {
+    const store = useStore();
+
+    const router = useRouter();
+    const route = useRoute();
+
+    const userState = computed(() => store.state.user);
+
     const handleResize = () => {
       document.body.style.height = window.innerHeight + "px";
     };
 
-    window.addEventListener("resize", handleResize);
+    onMounted(() => {
+      // Ensure the user token is correct
 
-    handleResize();
+      if (userState.value.isAuthenticated) {
+        store.dispatch("fetchUser");
+      }
+
+      window.addEventListener("resize", handleResize);
+
+      handleResize();
+    });
+
+    onUnmounted(() => {
+      window.removeEventListener("resize", handleResize);
+    });
+
+    const unauthRoutes = ["Login", "Callback"];
+
+    watchEffect(() => {
+      if (userState.value.loading || !route.name) {
+        return;
+      }
+
+      const isUnauthRoute = unauthRoutes.includes(route.name.toString());
+
+      if (!userState.value.isAuthenticated && !isUnauthRoute) {
+        router.push({ name: "Login" });
+        return;
+      }
+
+      if (userState.value.isAuthenticated && isUnauthRoute) {
+        router.push({ name: "Session" });
+        return;
+      }
+    });
   },
 });
 </script>
