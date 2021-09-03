@@ -5,7 +5,7 @@ import serverless from "serverless-http";
 
 import { Session } from "@qify/api";
 
-import { hasActiveDevice } from "./helpers/device";
+import { hasActiveDevices } from "./helpers/device";
 import { updateQueue } from "./helpers/queue";
 import { deleteSession, updateSessionTimeout } from "./helpers/session";
 import { sessionUsers } from "./helpers/user";
@@ -88,7 +88,7 @@ export const queueFunction: Handler<{ session?: string }> = async (event) => {
   let time: number | undefined;
 
   const players = users.filter((user) => user.isPlayer);
-  const sessionIsActive = await hasActiveDevice(players);
+  const sessionIsActive = await hasActiveDevices(players);
 
   // Increase timeout if there is atleast one active device
   if (sessionIsActive) {
@@ -112,7 +112,7 @@ export const queueFunction: Handler<{ session?: string }> = async (event) => {
         : undefined;
   }
 
-  await updateQueue(session.id);
+  await updateQueue(session.id, users);
 
   return await updateStateMachine(session.id, time);
 };

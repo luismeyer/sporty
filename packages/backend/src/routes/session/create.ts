@@ -39,7 +39,7 @@ export const createSession: RequestHandler<unknown, SessionResponse> = async (
   }
 
   // Search for active device
-  const isActive = await hasActiveDevice([user]);
+  const isActive = await hasActiveDevice(user);
 
   let timeInMS: number | undefined;
 

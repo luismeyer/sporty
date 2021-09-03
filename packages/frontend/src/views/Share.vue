@@ -9,7 +9,9 @@
 
     <div v-else class="share">
       <img :src="sessionState.session.qrCode" alt="QR code to join" />
-      <a :href="sessionState.session.url">share this link with your friends</a>
+      <span @click="copyLink" class="link">
+        share this link with your friends
+      </span>
     </div>
   </div>
 </template>
@@ -26,7 +28,32 @@ export default defineComponent({
 
     store.dispatch("fetchSession");
 
+    const copyLink = () => {
+      if (!session.session) {
+        return;
+      }
+
+      const el = document.createElement("textarea");
+      el.value = session.session.url;
+      el.setAttribute("readonly", "");
+      el.style.position = "absolute";
+      el.style.left = "-9999px";
+      document.body.appendChild(el);
+      const selected =
+        document.getSelection()?.rangeCount ?? 0 > 0
+          ? document.getSelection()?.getRangeAt(0)
+          : false;
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+      if (selected) {
+        document.getSelection()?.removeAllRanges();
+        document.getSelection()?.addRange(selected);
+      }
+    };
+
     return {
+      copyLink,
       sessionState: computed(() => session),
       loading: computed(() => session.loading && !session.session),
     };
@@ -54,5 +81,11 @@ img {
 .share {
   width: 80%;
   margin: 64px auto 0;
+}
+
+.link {
+  color: #2efff5;
+  text-decoration: underline;
+  cursor: pointer;
 }
 </style>

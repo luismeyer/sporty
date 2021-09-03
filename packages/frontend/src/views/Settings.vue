@@ -47,9 +47,9 @@ export default defineComponent({
       loading: computed(() => user.loading && !user.user),
 
       toggleIsPlayer: () => store.dispatch("toggleIsPlayer"),
-      handleLeave() {
+      async handleLeave() {
         leaving.value = true;
-        store.dispatch("leaveSession");
+        await store.dispatch("leaveSession");
         router.push({ name: "Session" });
       },
     };

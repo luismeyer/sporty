@@ -2,37 +2,43 @@ import { Queue, QueueItem, Track, User } from "@qify/api";
 
 import { updateItem } from "../services/db";
 import { callSpotify, createUri, spotify } from "../services/spotify";
+import { hasActiveDevice, hasActiveDevices } from "./device";
 import { generateTrack } from "./track";
 import { sessionUsers, transformUser } from "./user";
 
-export const updateQueue = async (session: string) => {
-  const users = await sessionUsers(session);
+export const updateQueue = async (session: string, users?: User[]) => {
+  const usersInSession = users ?? (await sessionUsers(session));
 
-  const players = users.filter((user) => user.isPlayer);
+  const players = usersInSession.filter((user) => user.isPlayer);
+
+  if (!hasActiveDevices(players)) {
+    return;
+  }
 
   await Promise.all(
-    users.map(async (user) => {
-      const id = user.queue.shift();
+    usersInSession.map(async (user) => {
+      // Pick first song in Queue
+      const [id] = user.queue;
       if (!id) {
         return;
       }
 
-      const res = await Promise.all(
-        players.map((player) =>
-          callSpotify(player, () => spotify.addToQueue(createUri(id)))
-            .then(() => true)
-            .catch(() => false)
-        )
-      );
+      // Iterate all players in the Session
+      for (let player of players) {
+        if (!hasActiveDevice(player)) {
+          return;
+        }
 
-      if (res.includes(false)) {
-        return;
+        // Update queue of player
+        await callSpotify(player, () => spotify.addToQueue(createUri(id)))
+          .then(() => true)
+          .catch(() => false);
       }
 
+      // Remove item from player queue
       await updateItem(user.id, {
         expressionAttributeNames: { "#queue": "queue" },
-        expressionAttributeValues: { ":queue": user.queue },
-        updateExpression: "SET #queue = :queue",
+        updateExpression: "REMOVE #queue[0]",
       });
     })
   );

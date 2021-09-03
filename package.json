@@ -17,7 +17,7 @@
     "start": "concurrently -c blue,red 'lerna run --parallel start' 'sls offline start'",
     "watch": "lerna run --parallel watch",
     "build": "lerna run --parallel build",
-    "db:install": "sls dynamodb install"
+    "invoke:queue": "sls invoke local -f queue -p invoke.json"
   },
   "devDependencies": {
     "concurrently": "^6.2.1",

@@ -2,13 +2,12 @@ import { User } from "@qify/api";
 
 import { callSpotify, spotify } from "../services/spotify";
 
-export const hasActiveDevice = async (users: User[]) => {
-  const devices = await Promise.all(
-    users.map((player) => callSpotify(player, () => spotify.getMyDevices()))
-  );
+export const hasActiveDevice = async (user: User) => {
+  const devices = await callSpotify(user, () => spotify.getMyDevices());
 
-  // Find if any Player has an active device
-  return devices.some((response) =>
-    response.body.devices.some((device) => device.is_active)
-  );
+  return devices.body.devices.some((device) => device.is_active);
+};
+
+export const hasActiveDevices = async (users: User[]) => {
+  return Promise.all(users.map(hasActiveDevice));
 };
