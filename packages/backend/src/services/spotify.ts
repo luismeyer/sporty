@@ -59,20 +59,24 @@ export const refreshTokens = async (user: UserInput): Promise<UserInput> => {
 export const callSpotify = async <T>(
   user: UserInput,
   fc: () => Promise<T>
-): Promise<T> => {
+): Promise<T | undefined> => {
   setTokens(user);
 
-  const result = await fc().catch(async (error) => {
-    console.log("Spotify error", error);
+  return fc()
+    .catch(async (error) => {
+      console.log("Spotify error Message", error.message);
+      console.log("Spotify error Status", error.statusCode);
 
-    const newCreds = await refreshTokens(user);
-    setTokens(newCreds);
+      if (error.body.status !== 401) {
+        return;
+      }
 
-    return fc();
-  });
+      const newCreds = await refreshTokens(user);
+      setTokens(newCreds);
 
-  clearTokens();
-  return result;
+      return fc();
+    })
+    .finally(() => clearTokens());
 };
 
-export const createUri = (id: string) => `spotify:track:${id}`;
+export const generateUri = (id: string) => `spotify:track:${id}`;

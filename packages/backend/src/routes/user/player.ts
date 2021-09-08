@@ -14,7 +14,7 @@ export const toggleIsPlayer: RequestHandler<unknown, UserResponse> = async (
   if (!user) {
     return res.json({
       success: false,
-      error: "Wrong token",
+      error: "INVALID_TOKEN",
     });
   }
 
@@ -29,8 +29,14 @@ export const toggleIsPlayer: RequestHandler<unknown, UserResponse> = async (
     updateExpression: "SET #isPlayer = :isPlayer",
   });
 
+  const frontendUser = await transformUser(updatedUser);
+
+  if (!frontendUser) {
+    return res.json({ success: false, error: "INTERNAL_ERROR" });
+  }
+
   res.json({
     success: true,
-    body: await transformUser(updatedUser),
+    body: frontendUser,
   });
 };

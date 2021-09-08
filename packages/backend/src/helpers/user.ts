@@ -4,6 +4,7 @@ import { FrontendUser, User } from "@qify/api";
 
 import { getItem, queryItems, sessionIndex, updateItem } from "../services/db";
 import { callSpotify, spotify } from "../services/spotify";
+import { filterNullish } from "./array";
 
 export const updateTokens = async (
   id: string,
@@ -57,8 +58,14 @@ export const authorizeRequest = async (
   return getItem(token);
 };
 
-export const transformUser = async (user: User): Promise<FrontendUser> => {
+export const transformUser = async (
+  user: User
+): Promise<FrontendUser | undefined> => {
   const sUser = await callSpotify(user, () => spotify.getMe());
+
+  if (!sUser) {
+    return;
+  }
 
   return {
     name: sUser.body.display_name ?? user.spotifyId,
@@ -72,7 +79,7 @@ export const transformUser = async (user: User): Promise<FrontendUser> => {
 export const transformUsers = async (
   users: User[]
 ): Promise<FrontendUser[]> => {
-  return Promise.all(users.map(transformUser));
+  return Promise.all(users.map(transformUser)).then(filterNullish);
 };
 
 export const removeUserFromSession = async (user: User) => {

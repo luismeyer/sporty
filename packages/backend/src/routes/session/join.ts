@@ -23,7 +23,10 @@ export const joinSession: RequestHandler<
   const { session: sessionId } = req.query;
 
   if (!sessionId) {
-    return res.json({ success: false, error: "Missing session" });
+    return res.json({
+      success: false,
+      error: "MISSING_PARAMETER",
+    });
   }
 
   const session = await getItem<Session>(String(sessionId));
@@ -31,24 +34,33 @@ export const joinSession: RequestHandler<
   if (!session) {
     return res.json({
       success: false,
-      error: "Error fetching session",
+      error: "INTERNAL_ERROR",
     });
   }
 
   const user = await authorizeRequest(req.headers);
 
   if (!user) {
-    return res.json({ success: false, error: "Wrong Token" });
+    return res.json({
+      success: false,
+      error: "INVALID_TOKEN",
+    });
   }
 
   if (user.session) {
-    return res.json({ success: false, error: "Already in Session" });
+    return res.json({
+      success: false,
+      error: "ALREADY_UPDATED",
+    });
   }
 
   const users = await sessionUsers(session.id);
 
   if (users.length === 0) {
-    return res.json({ success: false, error: "Session doesn't exist" });
+    return res.json({
+      success: false,
+      error: "WRONG_PARAMETER",
+    });
   }
 
   await updateItem(user.id, {

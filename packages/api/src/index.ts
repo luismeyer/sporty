@@ -18,6 +18,15 @@ export type FrontendUser = Pick<User, "isOwner" | "isPlayer"> & {
 export type Session = {
   id: string;
   timeout: string;
+  executionArn?: string;
+};
+
+export type FrontendSession = {
+  session: string;
+  timeout: string;
+  url: string;
+  qrCode: string;
+  users: FrontendUser[];
 };
 
 export type Track = {
@@ -31,10 +40,43 @@ export type Track = {
   };
 };
 
+export type ActivePlayer = {
+  isActive: true;
+  currentTrack: Track;
+};
+
+export type InActivePlayer = {
+  isActive: false;
+};
+
+export type Player = ActivePlayer | InActivePlayer;
+
 export type ErrorResponse = {
   success: false;
-  error: string;
+  error:
+    | "INVALID_TOKEN"
+    | "NO_ACTIVE_DEVICE"
+    | "ALREADY_UPDATED"
+    | "MISSING_PARAMETER"
+    | "WRONG_PARAMETER"
+    | "INTERNAL_ERROR"
+    | "NOT_IMPLEMENTED"
+    | "NO_SESSION";
 };
+
+export type QueueItem = {
+  track: Track;
+  user: User;
+};
+
+export type Queue = QueueItem[];
+
+export type FrontendQueueItem = {
+  track: Track;
+  user: FrontendUser;
+};
+
+export type FrontendQueue = FrontendQueueItem[];
 
 export type SuccessResponse<T> = {
   success: true;
@@ -47,27 +89,14 @@ export type LoginResponse = Response<{ url: string }>;
 
 export type AuthorizeResponse = Response<{ token: string }>;
 
-export type QueueItem = {
-  track: Track;
-  user: FrontendUser;
-};
-
-export type Queue = QueueItem[];
-
-export type QueueResponse = Response<{ queue: Queue }>;
+export type QueueResponse = Response<{ queue: FrontendQueue }>;
 
 export type SearchResponse = Response<{ tracks: Track[] }>;
-
-export type FrontendSession = {
-  session: string;
-  timeout: string;
-  url: string;
-  qrCode: string;
-  users: FrontendUser[];
-};
 
 export type SessionResponse = Response<FrontendSession>;
 
 export type MessageResponse = Response<{ message: string }>;
 
 export type UserResponse = Response<FrontendUser>;
+
+export type PlayerResponse = Response<Player>;

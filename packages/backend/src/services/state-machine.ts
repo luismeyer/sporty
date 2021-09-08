@@ -1,7 +1,9 @@
+import { Session } from "@qify/api";
 import AWS from "aws-sdk";
 
 import { queueLambdaArn, stateMachineRoleArn, __DEV__ } from "../helpers/const";
 import { timer } from "../helpers/timer";
+import { updateItem } from "./db";
 
 const stepFunctions = new AWS.StepFunctions({ region: "eu-central-1" });
 
@@ -44,6 +46,24 @@ const definition = (timeInMS?: number) => {
 
 const createStateMachineName = (session: string) => session + "stepfc";
 
+const updateExecutionArn = (session: string, executionArn: string) => {
+  return updateItem(session, {
+    expressionAttributeNames: { "#executionArn": "executionArn" },
+    expressionAttributeValues: { ":executionArn": executionArn },
+    updateExpression: "#executionArn = :executionArn",
+  });
+};
+
+const stopSessionExecution = async (session: Session) => {
+  if (!session.executionArn) {
+    return;
+  }
+
+  return stepFunctions
+    .stopExecution({ executionArn: session.executionArn })
+    .promise();
+};
+
 const startStateMachine = (arn: string, session: string) => {
   return stepFunctions
     .startExecution({
@@ -72,9 +92,13 @@ export const stateMachineArn = async (session: string) => {
 };
 
 export const createStateMachine = async (
-  session: string,
+  session: Session,
   timeInMS?: number
 ): Promise<string> => {
+  // Stop the running execution if exists
+  await stopSessionExecution(session);
+
+  // Generate definition json
   const machineDefinition = definition(timeInMS);
 
   if (__DEV__) {
@@ -85,20 +109,29 @@ export const createStateMachine = async (
   const result = await stepFunctions
     .createStateMachine({
       definition: machineDefinition,
-      name: createStateMachineName(session),
+      name: createStateMachineName(session.id),
       roleArn: stateMachineRoleArn,
     })
     .promise();
 
-  await startStateMachine(result.stateMachineArn, session);
+  const { executionArn } = await startStateMachine(
+    result.stateMachineArn,
+    session.id
+  );
+
+  await updateExecutionArn(session.id, executionArn);
 
   return "success";
 };
 
 export const updateStateMachine = async (
-  session: string,
+  session: Session,
   timeInMS?: number
 ): Promise<string | undefined> => {
+  // Stop the running execution if exists
+  await stopSessionExecution(session);
+
+  // Generate definition json
   const machineDefinition = definition(timeInMS);
 
   if (__DEV__) {
@@ -106,7 +139,7 @@ export const updateStateMachine = async (
     return "success";
   }
 
-  const arn = await stateMachineArn(session);
+  const arn = await stateMachineArn(session.id);
 
   if (!arn) {
     return "error no arn";
@@ -121,7 +154,9 @@ export const updateStateMachine = async (
 
   await timer(MACHINE_CREATION_TIMEOUT);
 
-  await startStateMachine(arn, session);
+  const { executionArn } = await startStateMachine(arn, session.id);
+
+  await updateExecutionArn(session.id, executionArn);
 
   return "success";
 };

@@ -14,7 +14,8 @@ export const loginUser: RequestHandler<unknown, LoginResponse> = (
     "user-read-currently-playing",
     "user-modify-playback-state",
     "user-read-private",
-    "user-read-playback-state"
+    "user-read-playback-state",
+    "user-read-recently-played"
   );
 
   res.json({

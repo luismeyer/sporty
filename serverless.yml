@@ -82,7 +82,7 @@ package:
 
 functions:
   backend:
-    handler: packages/backend/dist/handler.handler
+    handler: packages/backend/dist/app-handler.handler
     events:
       - httpApi:
           path: /api
@@ -100,7 +100,7 @@ functions:
 
   queue:
     name: ${self:custom.queueFunction.name}
-    handler: packages/backend/dist/handler.queueFunction
+    handler: packages/backend/dist/queue-handler.handler
     package:
       include:
         - "packages/backend/**"

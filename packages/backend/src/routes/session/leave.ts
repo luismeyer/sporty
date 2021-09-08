@@ -18,14 +18,14 @@ export const leaveSession: RequestHandler<unknown, MessageResponse> = async (
   if (!user) {
     return res.json({
       success: false,
-      error: "Wrong token",
+      error: "INVALID_TOKEN",
     });
   }
 
   if (!user.session) {
     return res.json({
       success: false,
-      error: "No Session",
+      error: "ALREADY_UPDATED",
     });
   }
 

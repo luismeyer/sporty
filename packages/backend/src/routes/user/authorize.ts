@@ -37,7 +37,10 @@ export const authorizeUser: RequestHandler<
   const { code } = req.query;
 
   if (!code) {
-    res.json({ success: false, error: "Missing code" });
+    res.json({
+      success: false,
+      error: "MISSING_PARAMETER",
+    });
     return;
   }
 
@@ -45,7 +48,10 @@ export const authorizeUser: RequestHandler<
   const codeResponse = await codeGrant(code);
 
   if (!codeResponse || !codeResponse.body.access_token) {
-    return res.json({ success: false, error: "Couldn't login" });
+    return res.json({
+      success: false,
+      error: "INTERNAL_ERROR",
+    });
   }
 
   const { access_token, refresh_token } = codeResponse.body;
@@ -54,7 +60,7 @@ export const authorizeUser: RequestHandler<
   const id = hashId(v4());
 
   // Request spotify profile data
-  const { body } = await callSpotify(
+  const meResponse = await callSpotify(
     {
       id,
       accessToken: access_token,
@@ -63,8 +69,12 @@ export const authorizeUser: RequestHandler<
     () => spotify.getMe()
   );
 
+  if (!meResponse) {
+    return res.json({ success: false, error: "INTERNAL_ERROR" });
+  }
+
   // Search user in DB by spotify id
-  const [user] = await queryUserBySpotifyId(body.id);
+  const [user] = await queryUserBySpotifyId(meResponse.body.id);
 
   // Update tokens and return id
   if (user) {
@@ -76,7 +86,7 @@ export const authorizeUser: RequestHandler<
   // Insert new user in DB
   const newUser = await putItem<User>({
     id,
-    spotifyId: body.id,
+    spotifyId: meResponse.body.id,
     accessToken: access_token,
     refreshToken: refresh_token,
     isPlayer: false,
@@ -87,7 +97,7 @@ export const authorizeUser: RequestHandler<
   if (!newUser) {
     res.json({
       success: false,
-      error: "Coulnd't create user",
+      error: "INTERNAL_ERROR",
     });
 
     return;

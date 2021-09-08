@@ -2,6 +2,7 @@ import { RequestHandler } from "express";
 
 import { SearchResponse } from "@qify/api";
 
+import { filterNullish } from "../helpers/array";
 import { transformTrack } from "../helpers/track";
 import { authorizeRequest } from "../helpers/user";
 import { callSpotify, spotify } from "../services/spotify";
@@ -17,7 +18,7 @@ export const search: RequestHandler<unknown, SearchResponse, unknown, Query> =
     if (!query) {
       return res.json({
         success: false,
-        error: "Missing query",
+        error: "MISSING_PARAMETER",
       });
     }
 
@@ -26,27 +27,32 @@ export const search: RequestHandler<unknown, SearchResponse, unknown, Query> =
     if (!user) {
       return res.json({
         success: false,
-        error: "Wrong token",
+        error: "INVALID_TOKEN",
       });
     }
 
     const response = await callSpotify(user, () => spotify.searchTracks(query));
 
+    if (!response) {
+      return res.json({ success: false, error: "INTERNAL_ERROR" });
+    }
+
     if (!response.body.tracks) {
-      return res.json({
-        success: false,
-        error: "Couldn't find song",
-      });
+      return res.json({ success: false, error: "WRONG_PARAMETER" });
     }
 
     const tracks = await Promise.all(
-      response.body.tracks.items.map(transformTrack(user))
+      response.body.tracks.items.map((track) => transformTrack(user, track))
     );
+
+    if (!tracks) {
+      return res.json({ success: false, error: "INTERNAL_ERROR" });
+    }
 
     res.json({
       success: true,
       body: {
-        tracks,
+        tracks: filterNullish(tracks),
       },
     });
   };

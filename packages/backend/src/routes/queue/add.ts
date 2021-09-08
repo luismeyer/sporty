@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 import { QueueResponse } from "../../../../api/dist";
 
-import { generateQueue } from "../../helpers/queue";
+import { generateQueue, transformQueue } from "../../helpers/queue";
 import { authorizeRequest, sessionUsers } from "../../helpers/user";
 import { updateItem } from "../../services/db";
 import { callSpotify, spotify } from "../../services/spotify";
@@ -18,7 +18,7 @@ export const addSong: RequestHandler<unknown, QueueResponse, unknown, Query> =
     if (!songId) {
       return res.json({
         success: false,
-        error: "Missing songId",
+        error: "MISSING_PARAMETER",
       });
     }
 
@@ -27,7 +27,7 @@ export const addSong: RequestHandler<unknown, QueueResponse, unknown, Query> =
     if (!user) {
       return res.json({
         success: false,
-        error: "Wrong token",
+        error: "INVALID_TOKEN",
       });
     }
 
@@ -42,7 +42,7 @@ export const addSong: RequestHandler<unknown, QueueResponse, unknown, Query> =
     if ([...queues, user.queue].includes(songId) && !force) {
       return res.json({
         success: false,
-        error: "Song already in Queue",
+        error: "ALREADY_UPDATED",
       });
     }
 
@@ -54,7 +54,7 @@ export const addSong: RequestHandler<unknown, QueueResponse, unknown, Query> =
     if (!track) {
       return res.json({
         success: false,
-        error: "Wrong song id",
+        error: "WRONG_PARAMETER",
       });
     }
 
@@ -74,7 +74,7 @@ export const addSong: RequestHandler<unknown, QueueResponse, unknown, Query> =
     res.json({
       success: true,
       body: {
-        queue: await generateQueue(updateUser),
+        queue: await generateQueue(user).then(transformQueue),
       },
     });
   };

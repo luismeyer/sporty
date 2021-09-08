@@ -19,14 +19,14 @@ export const getSession: RequestHandler<unknown, SessionResponse> = async (
   if (!user) {
     return res.json({
       success: false,
-      error: "Wrong token",
+      error: "INVALID_TOKEN",
     });
   }
 
   if (!user.session) {
     return res.json({
       success: false,
-      error: "User is not in a session",
+      error: "ALREADY_UPDATED",
     });
   }
 
@@ -35,7 +35,7 @@ export const getSession: RequestHandler<unknown, SessionResponse> = async (
   if (!session) {
     return res.json({
       success: false,
-      error: "Error fetching session",
+      error: "INTERNAL_ERROR",
     });
   }
 

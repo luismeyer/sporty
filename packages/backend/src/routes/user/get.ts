@@ -13,12 +13,18 @@ export const getUser: RequestHandler<unknown, UserResponse> = async (
   if (!user) {
     return res.json({
       success: false,
-      error: "Wrong token",
+      error: "INVALID_TOKEN",
     });
+  }
+
+  const frontendUser = await transformUser(user);
+
+  if (!frontendUser) {
+    return res.json({ success: false, error: "INTERNAL_ERROR" });
   }
 
   res.json({
     success: true,
-    body: await transformUser(user),
+    body: frontendUser,
   });
 };

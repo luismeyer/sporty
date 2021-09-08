@@ -2,7 +2,7 @@ import { RequestHandler } from "express";
 
 import { QueueResponse } from "@qify/api";
 
-import { generateQueue } from "../../helpers/queue";
+import { generateQueue, transformQueue } from "../../helpers/queue";
 import { authorizeRequest } from "../../helpers/user";
 import { updateItem } from "../../services/db";
 
@@ -19,7 +19,7 @@ export const removeSong: RequestHandler<any, QueueResponse, any, Query> =
     if (!songId) {
       return res.json({
         success: false,
-        error: "Missing songId",
+        error: "MISSING_PARAMETER",
       });
     }
 
@@ -28,7 +28,7 @@ export const removeSong: RequestHandler<any, QueueResponse, any, Query> =
     if (!user) {
       return res.json({
         success: false,
-        error: "Wrong token",
+        error: "INVALID_TOKEN",
       });
     }
 
@@ -36,7 +36,7 @@ export const removeSong: RequestHandler<any, QueueResponse, any, Query> =
     if (!user.queue.includes(songId)) {
       return res.json({
         success: false,
-        error: "Song is not in Queue",
+        error: "ALREADY_UPDATED",
       });
     }
 
@@ -53,7 +53,7 @@ export const removeSong: RequestHandler<any, QueueResponse, any, Query> =
     res.json({
       success: true,
       body: {
-        queue: await generateQueue(user),
+        queue: await generateQueue(user).then(transformQueue),
       },
     });
   };
