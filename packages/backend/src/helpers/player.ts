@@ -1,17 +1,8 @@
-import { User } from "@qify/api";
+import { Track, User } from "@qify/api";
 
 import { callSpotify, generateUri, spotify } from "../services/spotify";
 
-export const syncPlayer = async (
-  initiator: User,
-  users: User[]
-): Promise<boolean> => {
-  const players = users.filter((user) => user.isPlayer);
-
-  if (!initiator) {
-    return false;
-  }
-
+const findDataForSync = async (initiator: User) => {
   const ownerPlayback = await callSpotify(initiator, () =>
     spotify.getMyCurrentPlaybackState()
   );
@@ -26,6 +17,33 @@ export const syncPlayer = async (
   const position = await callSpotify(initiator, () =>
     spotify.getMyCurrentPlayingTrack()
   ).then((res) => res?.body.progress_ms ?? 0);
+
+  return {
+    id,
+    position,
+  };
+};
+
+export const syncPlayer = async (
+  initiator: User,
+  users: User[],
+  track?: Track
+): Promise<boolean> => {
+  const players = users.filter((user) => user.isPlayer);
+
+  let id: string;
+  let position: number;
+
+  if (track) {
+    id = track.id;
+    position = 0;
+  } else {
+    const data = await findDataForSync(initiator);
+    if (!data) return false;
+
+    id = data.id;
+    position = data.position;
+  }
 
   const songUri = generateUri(id);
 

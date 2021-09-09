@@ -7,6 +7,7 @@ const {
   QIFY_SECRET,
   FRONTEND_URL,
   IS_OFFLINE,
+  IS_LOCAL,
 } = process.env;
 
 if (!SPOTIFY_CLIENT_ID) {
@@ -53,4 +54,4 @@ export const spotifyBasicHeader = `Basic ${Buffer.from(
 
 export const frontendUrl = IS_OFFLINE ? "http://localhost:8080" : FRONTEND_URL;
 
-export const __DEV__ = IS_OFFLINE;
+export const __DEV__ = IS_OFFLINE || IS_LOCAL;

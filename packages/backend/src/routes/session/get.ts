@@ -17,26 +17,17 @@ export const getSession: RequestHandler<unknown, SessionResponse> = async (
   const user = await authorizeRequest(req.headers);
 
   if (!user) {
-    return res.json({
-      success: false,
-      error: "INVALID_TOKEN",
-    });
+    return res.json({ success: false, error: "INVALID_TOKEN" });
   }
 
   if (!user.session) {
-    return res.json({
-      success: false,
-      error: "ALREADY_UPDATED",
-    });
+    return res.json({ success: false, error: "ALREADY_UPDATED" });
   }
 
   const session = await getItem<Session>(user.session);
 
   if (!session) {
-    return res.json({
-      success: false,
-      error: "INTERNAL_ERROR",
-    });
+    return res.json({ success: false, error: "INTERNAL_ERROR" });
   }
 
   const users = await sessionUsers(user.session);

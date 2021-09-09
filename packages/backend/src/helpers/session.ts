@@ -5,9 +5,10 @@ import { FrontendSession, FrontendUser, Session, User } from "@qify/api";
 
 import { deleteItem, getItem, putItem, updateItem } from "../services/db";
 import { frontendUrl } from "./const";
+import { randomNumber } from "./random";
 import { removeUserFromSession } from "./user";
 
-const createSessionId = () => String(Math.round(Math.random() * 9000 + 1000));
+const createSessionId = () => String(randomNumber(1000, 9999));
 
 export const generateSession = async (
   user: User
@@ -86,3 +87,5 @@ export const deleteSession = async (session: Session, users: User[]) => {
 
   await Promise.all(users.map(removeUserFromSession));
 };
+
+export const findSessionOwner = (us: User[]) => us.find((u) => u.isOwner);

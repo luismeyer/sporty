@@ -3,11 +3,12 @@ import { RequestHandler } from "express";
 import { SessionResponse } from "@qify/api";
 
 import { hasActiveDevice } from "../../helpers/device";
-import { updateQueue } from "../../helpers/queue";
+import { popQueueItem } from "../../helpers/queue";
 import { generateSession, transformSession } from "../../helpers/session";
 import { authorizeRequest, transformUser } from "../../helpers/user";
 import { callSpotify, spotify } from "../../services/spotify";
 import { createStateMachine } from "../../services/state-machine";
+import { syncPlayer } from "../../helpers/player";
 
 export const createSession: RequestHandler<unknown, SessionResponse> = async (
   req,
@@ -38,27 +39,27 @@ export const createSession: RequestHandler<unknown, SessionResponse> = async (
     });
   }
 
-  // Search for active device
-  const isActive = await hasActiveDevice(user);
+  const item = await popQueueItem(user);
+
+  if (item) {
+    await syncPlayer(user, [user], item.track);
+  }
 
   let timeInMS: number | undefined;
 
   // Calculate time based on the current Track
-  if (isActive) {
+  if (await hasActiveDevice(user)) {
     const response = await callSpotify(user, () =>
       spotify.getMyCurrentPlayingTrack()
     );
 
-    if (!response) {
-      return res.json({ success: false, error: "INTERNAL_ERROR" });
+    if (response) {
+      const { item, progress_ms } = response.body;
+
+      timeInMS =
+        item && progress_ms ? item.duration_ms - progress_ms : undefined;
     }
-
-    const { item, progress_ms } = response.body;
-
-    timeInMS = item && progress_ms ? item.duration_ms - progress_ms : undefined;
   }
-
-  await updateQueue(session);
 
   await createStateMachine(session, timeInMS);
 

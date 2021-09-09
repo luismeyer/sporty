@@ -1,7 +1,8 @@
-import { Track, User } from "@qify/api";
+import { PlayerResponse, Track, User } from "@qify/api";
 
 import { callSpotify, generateUri, spotify } from "../services/spotify";
 import { hasActiveDevice } from "./device";
+import { sessionUsers } from "./user";
 
 export const transformTrack = async (
   user: User,
@@ -50,4 +51,27 @@ export const playTrack = async (
   await callSpotify(user, () => spotify.play({ uris: [trackUri] }));
 
   return true;
+};
+
+export const playTrackInSession = async (
+  user: User,
+  track: Track
+): Promise<Track | undefined> => {
+  // Make TS Happy
+  if (!user.session) {
+    return;
+  }
+
+  // Get all Players
+  const users = await sessionUsers(user.session);
+  const players = users.filter((u) => u.isPlayer);
+
+  // Send requests to spotify
+  await Promise.all(
+    players.map(async (player) => {
+      await playTrack(player, track.id);
+    })
+  );
+
+  return track;
 };

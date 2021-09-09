@@ -1,10 +1,10 @@
 import { Handler } from "aws-lambda";
 import dayjs from "dayjs";
 
-import { Session } from "@qify/api";
+import { Session, User } from "@qify/api";
 
-import { hasActiveDevices } from "./helpers/device";
-import { updateQueue } from "./helpers/queue";
+import { hasActiveDevice, hasActiveDevices } from "./helpers/device";
+import { popQueueItem } from "./helpers/queue";
 import { deleteSession, updateSessionTimeout } from "./helpers/session";
 import { sessionUsers } from "./helpers/user";
 import { getItem } from "./services/db";
@@ -12,8 +12,10 @@ import { callSpotify, spotify } from "./services/spotify";
 import {
   deleteStateMachine,
   stateMachineArn,
+  stopSessionExecution,
   updateStateMachine,
 } from "./services/state-machine";
+import { syncPlayer } from "./helpers/player";
 
 export const handler: Handler<{ session?: string }> = async (event) => {
   const sessionId = String(event.session);
@@ -21,22 +23,19 @@ export const handler: Handler<{ session?: string }> = async (event) => {
   const session = await getItem<Session>(sessionId);
 
   if (!session) {
+    await deleteStateMachine(sessionId);
     return "error no session";
   }
+
+  // Stop the running execution if exists
+  await stopSessionExecution(session);
 
   const users = await sessionUsers(session.id);
 
   // Delete Machine if all Users left or session ran in the timeout
   if (users.length === 0 || dayjs().isAfter(session.timeout)) {
     await deleteSession(session, users);
-
-    const arn = await stateMachineArn(session.id);
-
-    if (!arn) {
-      return "error no arn";
-    }
-
-    await deleteStateMachine(arn);
+    await deleteStateMachine(session.id);
 
     return "delete success";
   }
@@ -45,37 +44,36 @@ export const handler: Handler<{ session?: string }> = async (event) => {
   let time: number | undefined;
 
   const players = users.filter((user) => user.isPlayer);
-  const sessionIsActive = await hasActiveDevices(players);
 
   // Increase timeout if there is atleast one active device
-  if (sessionIsActive) {
+  if (await hasActiveDevices(players)) {
     await updateSessionTimeout(
       session,
       dayjs().add(5, "minutes").toISOString()
     );
   }
 
-  // Calculate the Machine Waiting Time by the Currentsong
-  if (players.length) {
-    const [player] = players;
+  const activePlayer =
+    players.find((player) => hasActiveDevice(player)) ?? players[0];
 
-    const res = await callSpotify(player, () =>
-      spotify.getMyCurrentPlayingTrack()
-    );
+  const queueItem = await popQueueItem(activePlayer);
 
-    if (!res) {
-      return;
-    }
-
-    const { body } = res;
-
-    time =
-      body.item && body.progress_ms
-        ? body.item.duration_ms - body.progress_ms
-        : undefined;
+  // Sync player if next track exists
+  if (queueItem) {
+    await syncPlayer(activePlayer, players, queueItem.track);
   }
 
-  await updateQueue(session, users);
+  const res = await callSpotify(activePlayer, () =>
+    spotify.getMyCurrentPlayingTrack()
+  );
+
+  if (res) {
+    const {
+      body: { item, progress_ms },
+    } = res;
+
+    time = item && progress_ms ? item.duration_ms - progress_ms : undefined;
+  }
 
   return await updateStateMachine(session, time);
 };

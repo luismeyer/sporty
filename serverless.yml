@@ -54,7 +54,11 @@ provider:
             - states:DeleteStateMachine
             - states:ListStateMachines
             - states:UpdateStateMachine
-          Resource: arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:*
+            - states:StopExecution
+          Resource: 
+            - arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:*
+            - arn:aws:states:${self:provider.region}:#{AWS::AccountId}:execution:*
+
         - Effect: Allow
           Action:
             - iam:PassRole

@@ -1,49 +1,12 @@
-import { FrontendQueue, Queue, QueueItem, Session, User } from "@qify/api";
+import { FrontendQueue, Queue, QueueItem, User } from "@qify/api";
 
 import { updateItem } from "../services/db";
-import { callSpotify, generateUri, spotify } from "../services/spotify";
+import { callSpotify, spotify } from "../services/spotify";
 import { filterNullish } from "./array";
-import { hasActiveDevice, hasActiveDevices } from "./device";
-import { generateTrack } from "./track";
+import { randomNumber } from "./random";
+import { findSessionOwner } from "./session";
+import { generateTrack, transformTrack } from "./track";
 import { sessionUsers, transformUser } from "./user";
-
-export const updateQueue = async (session: Session, users?: User[]) => {
-  const usersInSession = users ?? (await sessionUsers(session.id));
-
-  const players = usersInSession.filter((user) => user.isPlayer);
-
-  if (!hasActiveDevices(players)) {
-    return;
-  }
-
-  await Promise.all(
-    usersInSession.map(async (user) => {
-      // Pick first song in Queue
-      const [id] = user.queue;
-      if (!id) {
-        return;
-      }
-
-      // Iterate all players in the Session
-      for (let player of players) {
-        if (!hasActiveDevice(player)) {
-          return;
-        }
-
-        // Update queue of player
-        await callSpotify(player, () => spotify.addToQueue(generateUri(id)))
-          .then(() => true)
-          .catch(() => false);
-      }
-
-      // Remove item from player queue
-      await updateItem(user.id, {
-        expressionAttributeNames: { "#queue": "queue" },
-        updateExpression: "REMOVE #queue[0]",
-      });
-    })
-  );
-};
 
 export const hasItemsInQueue = (users: User[]): boolean => {
   return users.some((user) => user.queue.length > 0);
@@ -66,28 +29,28 @@ export const transformQueue = async (queue: Queue): Promise<FrontendQueue> => {
   ).then(filterNullish);
 };
 
-export const generateQueue = async (
-  currentUser: User,
-  limit?: number
-): Promise<Queue> => {
-  // Handle if current user isn't in a session
+const generateQueuePrivate = async (currentUser: User) => {
+  const queue = await Promise.all(
+    currentUser.queue.map(async (id) => {
+      const track = await generateTrack(currentUser, id);
+
+      if (!track) {
+        return;
+      }
+
+      return {
+        track,
+        user: currentUser,
+      };
+    })
+  );
+
+  return filterNullish(queue);
+};
+
+const generateQueueSession = async (currentUser: User, limit: number) => {
   if (!currentUser.session) {
-    const queue = await Promise.all(
-      currentUser.queue.map(async (id) => {
-        const track = await generateTrack(currentUser, id);
-
-        if (!track) {
-          return;
-        }
-
-        return {
-          track,
-          user: currentUser,
-        };
-      })
-    );
-
-    return filterNullish(queue);
+    return [];
   }
 
   // Replace the current user in the user response so the updated queue is used
@@ -98,20 +61,16 @@ export const generateQueue = async (
   const queueUpdates: QueueItem[][] = [];
   let count = 0;
 
-  while (hasItemsInQueue(users) && count < (limit ?? 100)) {
+  while (hasItemsInQueue(users) && count < limit) {
     const tracks = await Promise.all(
       users.map(async (user) => {
         const id = user.queue.shift();
 
-        if (!id) {
-          return;
-        }
+        if (!id) return;
 
         const track = await generateTrack(user, id);
 
-        if (!track) {
-          return;
-        }
+        if (!track) return;
 
         return {
           user,
@@ -126,4 +85,56 @@ export const generateQueue = async (
   }
 
   return queueUpdates.flat();
+};
+
+export const generateQueue = async (
+  currentUser: User,
+  limit = 100
+): Promise<Queue> => {
+  // Handle if current user isn't in a session
+  if (!currentUser.session) {
+    return generateQueuePrivate(currentUser);
+  }
+
+  return generateQueueSession(currentUser, limit);
+};
+
+export const popQueueItem = async (
+  user: User
+): Promise<QueueItem | undefined> => {
+  const [item] = await generateQueue(user, 1);
+
+  // create next song automatic
+  if (!item) {
+    // find user responsible for next song
+    const maybeOwner = user.session
+      ? await sessionUsers(user.session).then(findSessionOwner)
+      : user;
+
+    const owner = maybeOwner ?? user;
+
+    // find random track in top tracks
+    const res = await callSpotify(owner ?? user, () =>
+      spotify.getMyTopTracks({ limit: 10, offset: randomNumber(0, 49) })
+    );
+
+    const song = res?.body.items[0];
+    if (!song) return;
+
+    const track = await transformTrack(owner, song);
+    if (!track) return;
+
+    return {
+      track,
+      user: owner,
+    };
+  }
+
+  // Remove item from player queue
+  await updateItem(item.user.id, {
+    expressionAttributeNames: { "#queue": "queue" },
+    updateExpression: "REMOVE #queue[0]",
+  });
+
+  return item;
 };

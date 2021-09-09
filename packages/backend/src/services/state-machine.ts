@@ -50,18 +50,19 @@ const updateExecutionArn = (session: string, executionArn: string) => {
   return updateItem(session, {
     expressionAttributeNames: { "#executionArn": "executionArn" },
     expressionAttributeValues: { ":executionArn": executionArn },
-    updateExpression: "#executionArn = :executionArn",
+    updateExpression: "SET #executionArn = :executionArn",
   });
 };
 
-const stopSessionExecution = async (session: Session) => {
+export const stopSessionExecution = async (session: Session) => {
   if (!session.executionArn) {
     return;
   }
 
   return stepFunctions
     .stopExecution({ executionArn: session.executionArn })
-    .promise();
+    .promise()
+    .catch((e) => console.log("Error stopping execution: " + e));
 };
 
 const startStateMachine = (arn: string, session: string) => {
@@ -95,9 +96,6 @@ export const createStateMachine = async (
   session: Session,
   timeInMS?: number
 ): Promise<string> => {
-  // Stop the running execution if exists
-  await stopSessionExecution(session);
-
   // Generate definition json
   const machineDefinition = definition(timeInMS);
 
@@ -128,9 +126,6 @@ export const updateStateMachine = async (
   session: Session,
   timeInMS?: number
 ): Promise<string | undefined> => {
-  // Stop the running execution if exists
-  await stopSessionExecution(session);
-
   // Generate definition json
   const machineDefinition = definition(timeInMS);
 
@@ -161,6 +156,12 @@ export const updateStateMachine = async (
   return "success";
 };
 
-export const deleteStateMachine = async (arn: string) => {
+export const deleteStateMachine = async (sessionId: string) => {
+  const arn = await stateMachineArn(sessionId);
+
+  if (!arn) {
+    return;
+  }
+
   return stepFunctions.deleteStateMachine({ stateMachineArn: arn }).promise();
 };

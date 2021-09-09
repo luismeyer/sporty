@@ -23,44 +23,29 @@ export const joinSession: RequestHandler<
   const { session: sessionId } = req.query;
 
   if (!sessionId) {
-    return res.json({
-      success: false,
-      error: "MISSING_PARAMETER",
-    });
+    return res.json({ success: false, error: "MISSING_PARAMETER" });
   }
 
   const session = await getItem<Session>(String(sessionId));
 
   if (!session) {
-    return res.json({
-      success: false,
-      error: "INTERNAL_ERROR",
-    });
+    return res.json({ success: false, error: "INTERNAL_ERROR" });
   }
 
   const user = await authorizeRequest(req.headers);
 
   if (!user) {
-    return res.json({
-      success: false,
-      error: "INVALID_TOKEN",
-    });
+    return res.json({ success: false, error: "INVALID_TOKEN" });
   }
 
   if (user.session) {
-    return res.json({
-      success: false,
-      error: "ALREADY_UPDATED",
-    });
+    return res.json({ success: false, error: "ALREADY_UPDATED" });
   }
 
   const users = await sessionUsers(session.id);
 
   if (users.length === 0) {
-    return res.json({
-      success: false,
-      error: "WRONG_PARAMETER",
-    });
+    return res.json({ success: false, error: "WRONG_PARAMETER" });
   }
 
   await updateItem(user.id, {

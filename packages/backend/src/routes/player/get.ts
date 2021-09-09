@@ -13,10 +13,11 @@ export const getPlayer: RequestHandler<unknown, PlayerResponse> = async (
   const user = await authorizeRequest(req.headers);
 
   if (!user) {
-    return res.json({
-      success: false,
-      error: "INVALID_TOKEN",
-    });
+    return res.json({ success: false, error: "INVALID_TOKEN" });
+  }
+
+  if (!user.session) {
+    return res.json({ success: false, error: "NO_SESSION" });
   }
 
   const playBackState = await callSpotify(user, () =>
@@ -24,10 +25,7 @@ export const getPlayer: RequestHandler<unknown, PlayerResponse> = async (
   );
 
   if (!playBackState) {
-    return res.json({
-      success: false,
-      error: "INTERNAL_ERROR",
-    });
+    return res.json({ success: false, error: "INTERNAL_ERROR" });
   }
 
   let resBody: Player | undefined;
