@@ -21,7 +21,7 @@ export const getSession: RequestHandler<unknown, SessionResponse> = async (
   }
 
   if (!user.session) {
-    return res.json({ success: false, error: "ALREADY_UPDATED" });
+    return res.json({ success: false, error: "NO_SESSION" });
   }
 
   const session = await getItem<Session>(user.session);

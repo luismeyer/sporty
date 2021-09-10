@@ -10,7 +10,8 @@ import {
   onMounted,
   onUnmounted,
   PropType,
-  watchEffect,
+  toRef,
+  watch,
 } from "vue";
 
 import Spinner from "./Spinner.vue";
@@ -36,11 +37,8 @@ export default defineComponent({
   setup(props) {
     let timer: number | undefined;
 
-    // Initially load data
-    props.load();
-
     const scrollTop = () => {
-      window.scrollTo({ top: 0 });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
     const scrollToContent = () => {
@@ -58,11 +56,9 @@ export default defineComponent({
           return;
         }
 
-        if (window.scrollY !== 0) {
-          return;
+        if (!loading.value && window.scrollY === 0) {
+          props.load();
         }
-
-        props.load();
       }, 500);
     };
 
@@ -80,8 +76,15 @@ export default defineComponent({
       window.removeEventListener("scroll", handleScroll);
     });
 
-    watchEffect(() => {
-      if (props.loading) {
+    const loading = toRef(props, "loading");
+
+    watch(loading, (newState, oldState) => {
+      if (newState === oldState) {
+        return;
+      }
+
+      if (newState) {
+        scrollTop();
         return;
       }
 

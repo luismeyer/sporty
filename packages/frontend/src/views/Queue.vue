@@ -3,7 +3,6 @@
     <Reload :load="refreshQueue" :loading="loading" />
 
     <h1>Your Queue</h1>
-
     <div v-if="initialLoading || queueState.queue?.length === 0" class="empty">
       <span>
         is {{ initialLoading ? "loading..." : "empty... add something" }}
@@ -11,7 +10,7 @@
       <img src="../assets/queue.png" />
     </div>
 
-    <ul v-else>
+    <ul v-else-if="queueState.queue?.length">
       <Track
         v-for="track in queueState.queue"
         :key="track.id"
@@ -44,6 +43,10 @@ export default defineComponent({
 
     store.dispatch("fetchUser");
 
+    const refreshQueue = () => store.dispatch("fetchQueue");
+
+    refreshQueue();
+
     return {
       queueState: computed(() => queue),
       user: computed(() => user.user),
@@ -53,7 +56,7 @@ export default defineComponent({
       ),
 
       remove: (id: string) => store.dispatch("removeSongFromQueue", id),
-      refreshQueue: () => store.dispatch("fetchQueue"),
+      refreshQueue,
     };
   },
 });

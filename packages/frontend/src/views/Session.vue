@@ -46,10 +46,17 @@ export default defineComponent({
     const { session } = useState();
     const store = useStore();
 
+    const loadSession = () => {
+      console.log("load session from session");
+      return store.dispatch("fetchSession");
+    };
+
+    loadSession();
+
     return {
       handleCreate: () => store.dispatch("createSession"),
       handleLeave: () => store.dispatch("leaveSession"),
-      fetch: () => store.dispatch("fetchSession"),
+      fetch: loadSession,
       sessionState: computed(() => session),
       loading: computed(() => !session.session && session.loading),
     };
@@ -87,6 +94,7 @@ h1 {
   font-size: 24px;
   box-shadow: rgb(0 0 0) 0px 6px 10px;
   width: max-content;
+  cursor: pointer;
 }
 
 ul {

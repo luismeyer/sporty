@@ -53,13 +53,17 @@ export const syncPlayer = async (
         spotify.getMyCurrentPlaybackState()
       );
 
-      if (!playerPlayback?.body.device.is_active) {
+      if (!playerPlayback?.body.device?.is_active) {
         return;
       }
 
-      // Seek and Play if the same song is on
+      // Play if the same song is on
       if (playerPlayback.body.item?.id === id) {
-        await callSpotify(player, () => spotify.seek(position));
+        // Seek the correct position
+        if (playerPlayback.body.progress_ms !== position) {
+          await callSpotify(player, () => spotify.seek(position));
+        }
+
         await callSpotify(player, () => spotify.play());
         return;
       }

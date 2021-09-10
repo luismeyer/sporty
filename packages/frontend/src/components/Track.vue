@@ -104,6 +104,7 @@ export default defineComponent({
   color: white;
   transition: opacity 0.2s ease;
   width: 100%;
+  cursor: pointer;
 }
 
 .info {

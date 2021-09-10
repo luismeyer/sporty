@@ -1,6 +1,7 @@
 <template>
   <div>
     <router-view />
+    <Player />
     <Footer />
   </div>
 </template>
@@ -16,11 +17,13 @@ import {
 import { useRoute, useRouter } from "vue-router";
 
 import Footer from "./components/Footer.vue";
+import Player from "./components/Player.vue";
 import { useStore } from "./store";
 
 export default defineComponent({
   components: {
     Footer,
+    Player,
   },
 
   setup() {

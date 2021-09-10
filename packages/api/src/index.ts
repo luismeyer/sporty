@@ -33,6 +33,7 @@ export type Track = {
   id: string;
   name: string;
   artists: string[];
+  duration: number;
   image: {
     url: string;
     height?: number | undefined;
@@ -42,7 +43,11 @@ export type Track = {
 
 export type ActivePlayer = {
   isActive: true;
-  currentTrack: Track;
+  info: {
+    isPlaying: boolean;
+    track: Track;
+    progress: number;
+  };
 };
 
 export type InActivePlayer = {

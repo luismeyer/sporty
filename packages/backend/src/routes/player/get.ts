@@ -28,24 +28,28 @@ export const getPlayer: RequestHandler<unknown, PlayerResponse> = async (
     return res.json({ success: false, error: "INTERNAL_ERROR" });
   }
 
-  let resBody: Player | undefined;
-
   const { body } = playBackState;
 
-  if (body.is_playing && body.currently_playing_type === "track") {
-    const track = body.item as SpotifyApi.TrackObjectFull;
-    const currentTrack = await transformTrack(user, track);
+  if (body.currently_playing_type !== "track") {
+    return res.json({ success: true, body: { isActive: false } });
+  }
 
-    resBody = currentTrack && {
-      isActive: true,
-      currentTrack,
-    };
+  const track = body.item as SpotifyApi.TrackObjectFull;
+  const currentTrack = await transformTrack(user, track);
+
+  if (!currentTrack) {
+    return res.json({ success: true, body: { isActive: false } });
   }
 
   res.json({
     success: true,
-    body: resBody ?? {
-      isActive: false,
+    body: {
+      isActive: true,
+      info: {
+        progress: playBackState.body.progress_ms ?? 0,
+        track: currentTrack,
+        isPlaying: playBackState.body.is_playing,
+      },
     },
   });
 };

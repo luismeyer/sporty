@@ -26,8 +26,11 @@ export const sessionModule: Module<SessionState, RootState> = {
   },
 
   actions: {
-    async fetchSession({ commit }) {
+    async fetchSession({ commit, dispatch }) {
       commit("UPDATE_SESSION_LOADING", true);
+
+      // Reload the player
+      dispatch("fetchPlayer");
 
       const response = await fetchApi<SessionResponse>("session");
 
@@ -40,13 +43,15 @@ export const sessionModule: Module<SessionState, RootState> = {
       commit("UPDATE_SESSION_LOADING", false);
     },
 
-    async createSession({ commit }) {
+    async createSession({ commit, dispatch }) {
       commit("UPDATE_SESSION_LOADING", true);
 
       const response = await fetchApi<SessionResponse>("session/create");
 
       if (response.success) {
         commit("UPDATE_SESSION", response.body);
+
+        dispatch("fetchPlayer");
       }
 
       commit("UPDATE_SESSION_LOADING", false);
@@ -63,6 +68,7 @@ export const sessionModule: Module<SessionState, RootState> = {
 
       if (response.success) {
         commit("UPDATE_SESSION", undefined);
+        commit("UPDATE_PLAYER", undefined);
       }
 
       commit("UPDATE_SESSION_LOADING", false);

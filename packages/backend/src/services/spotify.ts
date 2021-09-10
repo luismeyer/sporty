@@ -67,9 +67,11 @@ export const callSpotify = async <T>(
       console.log("Spotify error Message", error.message);
       console.log("Spotify error Status", error.statusCode);
 
-      if (error.body.status !== 401) {
+      if (error.statusCode !== 401) {
         return;
       }
+
+      console.log("Refreshing tokens");
 
       const newCreds = await refreshTokens(user);
       setTokens(newCreds);

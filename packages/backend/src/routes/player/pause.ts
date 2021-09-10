@@ -8,6 +8,7 @@ import { authorizeRequest, sessionUsers } from "../../helpers/user";
 import { getItem } from "../../services/db";
 import { callSpotify, spotify } from "../../services/spotify";
 import { stopSessionExecution } from "../../services/state-machine";
+import { transformTrack } from "../../helpers/track";
 
 export const pausePlayer: RequestHandler<unknown, PlayerResponse> = async (
   req,
@@ -39,7 +40,11 @@ export const pausePlayer: RequestHandler<unknown, PlayerResponse> = async (
     spotify.getMyCurrentPlaybackState()
   );
 
-  if (!playbackResponse?.body.is_playing) {
+  if (!playbackResponse || playbackResponse.body.item?.type !== "track") {
+    return res.json({ success: false, error: "INTERNAL_ERROR" });
+  }
+
+  if (!playbackResponse.body.is_playing) {
     return res.json({ success: false, error: "ALREADY_UPDATED" });
   }
 
@@ -48,10 +53,21 @@ export const pausePlayer: RequestHandler<unknown, PlayerResponse> = async (
   const users = await sessionUsers(session.id);
   await pausePlayerHelper(users);
 
+  const track = await transformTrack(user, playbackResponse.body.item);
+
+  if (!track) {
+    return res.json({ success: false, error: "INTERNAL_ERROR" });
+  }
+
   res.json({
     success: true,
     body: {
-      isActive: false,
+      isActive: true,
+      info: {
+        isPlaying: false,
+        progress: playbackResponse.body.progress_ms ?? 0,
+        track,
+      },
     },
   });
 };

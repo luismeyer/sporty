@@ -20,7 +20,11 @@ const nextPlayerSession = async (
     success: true,
     body: {
       isActive: true,
-      currentTrack: response,
+      info: {
+        track: response,
+        isPlaying: true,
+        progress: 0,
+      },
     },
   };
 };

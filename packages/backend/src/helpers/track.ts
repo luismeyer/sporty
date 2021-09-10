@@ -1,4 +1,4 @@
-import { PlayerResponse, Track, User } from "@qify/api";
+import { Track, User } from "@qify/api";
 
 import { callSpotify, generateUri, spotify } from "../services/spotify";
 import { hasActiveDevice } from "./device";
@@ -8,9 +8,9 @@ export const transformTrack = async (
   user: User,
   track: Pick<
     SpotifyApi.SingleTrackResponse,
-    "album" | "id" | "name" | "artists"
+    "album" | "id" | "name" | "artists" | "duration_ms"
   >
-) => {
+): Promise<Track | undefined> => {
   const album = await callSpotify(user, () => spotify.getAlbum(track.album.id));
 
   if (!album) {
@@ -22,6 +22,7 @@ export const transformTrack = async (
     name: track.name,
     artists: track.artists.map((artist) => artist.name),
     image: album.body.images[0],
+    duration: track.duration_ms,
   };
 };
 

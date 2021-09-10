@@ -70,7 +70,11 @@ export const startPlayer: RequestHandler<unknown, PlayerResponse> = async (
     success: true,
     body: {
       isActive: true,
-      currentTrack,
+      info: {
+        progress: playbackResponse.body.progress_ms ?? 0,
+        track: currentTrack,
+        isPlaying: true,
+      },
     },
   });
 };
