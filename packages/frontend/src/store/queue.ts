@@ -1,6 +1,6 @@
 import { Module } from "vuex";
 
-import { Queue, QueueResponse } from "@qify/api";
+import { Queue, QueueResponse } from "@sporty/api";
 
 import { fetchApi } from "../api";
 import { RootState } from "../store/index";

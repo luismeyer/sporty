@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 
-import { LoginResponse } from "@qify/api";
+import { LoginResponse } from "@sporty/api";
 
 import { authorizeURL } from "../../services/spotify";
 

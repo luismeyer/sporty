@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 
-import { QueueResponse } from "@qify/api";
+import { QueueResponse } from "@sporty/api";
 
 import { generateQueue, transformQueue } from "../../helpers/queue";
 import { authorizeRequest } from "../../helpers/user";

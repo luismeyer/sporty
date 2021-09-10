@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import qrcode from "qrcode";
 
-import { FrontendSession, FrontendUser, Session, User } from "@qify/api";
+import { FrontendSession, FrontendUser, Session, User } from "@sporty/api";
 
 import { deleteItem, getItem, putItem, updateItem } from "../services/db";
 import { frontendUrl } from "./const";

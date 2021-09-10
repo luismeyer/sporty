@@ -1,6 +1,6 @@
 import { Ref, ref } from "vue";
 
-import { SearchResponse, Track } from "@qify/api";
+import { SearchResponse, Track } from "@sporty/api";
 
 import { fetchApi } from "../api";
 

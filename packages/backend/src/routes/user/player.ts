@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 
-import { User, UserResponse } from "@qify/api";
+import { User, UserResponse } from "@sporty/api";
 
 import { authorizeRequest, transformUser } from "../../helpers/user";
 import { updateItem } from "../../services/db";

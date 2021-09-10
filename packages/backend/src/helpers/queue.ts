@@ -1,4 +1,4 @@
-import { FrontendQueue, Queue, QueueItem, User } from "@qify/api";
+import { FrontendQueue, Queue, QueueItem, User } from "@sporty/api";
 
 import { updateItem } from "../services/db";
 import { callSpotify, spotify } from "../services/spotify";

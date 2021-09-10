@@ -1,4 +1,4 @@
-service: qify
+service: sporty
 
 frameworkVersion: "2"
 
@@ -13,16 +13,16 @@ custom:
     name: ${self:custom.awsEnv.assetPreName}-queue
     arn: arn:aws:lambda:${self:custom.awsEnv.arnRegionAndAccount}:function:${self:custom.queueFunction.name}
   stateMachineRole:
-    name: Qify-${self:custom.stage}-StateMachine
+    name: Sporty-${self:custom.stage}-StateMachine
     arn: arn:aws:iam::#{AWS::AccountId}:role/${self:custom.stateMachineRole.name}
   table: 
-    name: qify-${self:custom.stage}
+    name: sporty-${self:custom.stage}
     arn: arn:aws:dynamodb:${self:custom.awsEnv.arnRegionAndAccount}:table/${self:custom.table.name}
   jetpack:
     preInclude:
       - "!**"
   client:
-    bucketName: qify-${self:custom.stage}-frontend
+    bucketName: sporty-${self:custom.stage}-frontend
     distributionFolder: packages/frontend/dist
     indexDocument: index.html
     errorDocument: index.html
@@ -73,7 +73,7 @@ provider:
     SPOTIFY_CLIENT_ID: ${env:SPOTIFY_CLIENT_ID, file(.env.json):SPOTIFY_CLIENT_ID}
     SPOTIFY_CLIENT_SECRET: ${env:SPOTIFY_CLIENT_SECRET, file(.env.json):SPOTIFY_CLIENT_SECRET}
     FRONTEND_URL: ${env:FRONTEND_URL, file(.env.json):FRONTEND_URL}
-    QIFY_SECRET: ${env:QIFY_SECRET, file(.env.json):QIFY_SECRET}
+    SPORTY_SECRET: ${env:SPORTY_SECRET, file(.env.json):SPORTY_SECRET}
 
 plugins:
   - serverless-finch
@@ -115,7 +115,7 @@ functions:
 
 resources:
   Resources:
-    QifyTable:
+    SportyTable:
       Type: AWS::DynamoDB::Table
       Properties:
         BillingMode: PAY_PER_REQUEST

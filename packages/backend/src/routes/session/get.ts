@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 
-import { Session, SessionResponse } from "@qify/api";
+import { Session, SessionResponse } from "@sporty/api";
 
 import { transformSession } from "../../helpers/session";
 import {

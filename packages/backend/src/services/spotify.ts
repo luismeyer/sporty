@@ -1,6 +1,6 @@
 import SpotifyWebApi from "spotify-web-api-node";
 
-import { User } from "@qify/api";
+import { User } from "@sporty/api";
 
 import {
   frontendUrl,

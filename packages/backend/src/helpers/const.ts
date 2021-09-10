@@ -4,7 +4,7 @@ const {
   DDB_TABLE,
   STATE_MACHINE_ROLE_ARN,
   QUEUE_LAMBDA_ARN,
-  QIFY_SECRET,
+  SPORTY_SECRET,
   FRONTEND_URL,
   IS_OFFLINE,
   IS_LOCAL,
@@ -30,8 +30,8 @@ if (!QUEUE_LAMBDA_ARN) {
   throw new Error("Missing Env Var: 'QUEUE_LAMBDA_ARN'");
 }
 
-if (!QIFY_SECRET) {
-  throw new Error("Missing Env Var: 'QIFY_SECRET'");
+if (!SPORTY_SECRET) {
+  throw new Error("Missing Env Var: 'SPORTY_SECRET'");
 }
 
 if (!FRONTEND_URL) {
@@ -46,7 +46,7 @@ export const spotifyClientSecret = SPOTIFY_CLIENT_SECRET;
 export const stateMachineRoleArn = STATE_MACHINE_ROLE_ARN;
 export const queueLambdaArn = QUEUE_LAMBDA_ARN;
 
-export const qifySecret = QIFY_SECRET;
+export const sportySecret = SPORTY_SECRET;
 
 export const spotifyBasicHeader = `Basic ${Buffer.from(
   `${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`

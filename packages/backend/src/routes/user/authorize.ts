@@ -2,15 +2,15 @@ import crypto from "crypto";
 import { RequestHandler } from "express";
 import { v4 } from "uuid";
 
-import { AuthorizeResponse, User } from "@qify/api";
+import { AuthorizeResponse, User } from "@sporty/api";
 
-import { qifySecret } from "../../helpers/const";
+import { sportySecret } from "../../helpers/const";
 import { updateTokens } from "../../helpers/user";
 import { putItem, queryItems, spotifyIdIndex } from "../../services/db";
 import { callSpotify, codeGrant, spotify } from "../../services/spotify";
 
 const hashId = (id: string) => {
-  return crypto.createHmac("sha256", qifySecret).update(id).digest("hex");
+  return crypto.createHmac("sha256", sportySecret).update(id).digest("hex");
 };
 
 const queryUserBySpotifyId = async (id: string) => {

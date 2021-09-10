@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 
-import { SessionResponse } from "@qify/api";
+import { SessionResponse } from "@sporty/api";
 
 import { hasActiveDevice } from "../../helpers/device";
 import { popQueueItem } from "../../helpers/queue";

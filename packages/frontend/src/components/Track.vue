@@ -49,7 +49,7 @@
 <script lang="ts">
 import { defineComponent, PropType, ref } from "vue";
 
-import { FrontendUser, Track } from "@qify/api";
+import { FrontendUser, Track } from "@sporty/api";
 
 export default defineComponent({
   props: {

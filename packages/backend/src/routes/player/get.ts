@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 
-import { Player, PlayerResponse } from "@qify/api";
+import { Player, PlayerResponse } from "@sporty/api";
 
 import { transformTrack } from "../../helpers/track";
 import { authorizeRequest } from "../../helpers/user";

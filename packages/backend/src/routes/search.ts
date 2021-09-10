@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 
-import { SearchResponse } from "@qify/api";
+import { SearchResponse } from "@sporty/api";
 
 import { filterNullish } from "../helpers/array";
 import { transformTrack } from "../helpers/track";

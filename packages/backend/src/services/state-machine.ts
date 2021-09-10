@@ -1,4 +1,4 @@
-import { Session } from "@qify/api";
+import { Session } from "@sporty/api";
 import AWS from "aws-sdk";
 
 import { queueLambdaArn, stateMachineRoleArn, __DEV__ } from "../helpers/const";
@@ -18,7 +18,7 @@ const definition = (timeInMS?: number) => {
   const Seconds = time > 0 ? time : MACHINE_DEFAULT_WAITING_TIME;
 
   return JSON.stringify({
-    Comment: "State Machine for qify",
+    Comment: "State Machine for sporty",
     StartAt: "Wait",
     States: {
       Wait: {

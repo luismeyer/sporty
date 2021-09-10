@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 
-import { PlayerResponse, Session } from "@qify/api";
+import { PlayerResponse, Session } from "@sporty/api";
 
 import { hasActiveDevice } from "../../helpers/device";
 import { syncPlayer } from "../../helpers/player";

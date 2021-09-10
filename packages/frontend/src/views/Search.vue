@@ -30,7 +30,7 @@
 <script lang="ts">
 import { defineComponent, onMounted, ref, watchEffect } from "vue";
 
-import { Track as TrackType } from "@qify/api";
+import { Track as TrackType } from "@sporty/api";
 
 import Track from "../components/Track.vue";
 import Spinner from "../components/Spinner.vue";

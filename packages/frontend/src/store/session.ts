@@ -1,6 +1,6 @@
 import { Module } from "vuex";
 
-import { MessageResponse, FrontendSession, SessionResponse } from "@qify/api";
+import { MessageResponse, FrontendSession, SessionResponse } from "@sporty/api";
 
 import { fetchApi } from "../api";
 import { RootState } from "./";

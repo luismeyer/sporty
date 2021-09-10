@@ -1,7 +1,7 @@
 import { Handler } from "aws-lambda";
 import dayjs from "dayjs";
 
-import { Session, User } from "@qify/api";
+import { Session, User } from "@sporty/api";
 
 import { hasActiveDevice, hasActiveDevices } from "./helpers/device";
 import { popQueueItem } from "./helpers/queue";

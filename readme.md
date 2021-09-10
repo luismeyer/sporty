@@ -1,6 +1,6 @@
-# **Q**ify 🎶
+# Sporty 🏋️ 🎶
 
-A **supercharged** Spotify Queue
+A **supercharged** Spotify Party
 
 ## Features
 

@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 
-import { MessageResponse, Session } from "@qify/api";
+import { MessageResponse, Session } from "@sporty/api";
 
 import { deleteSession } from "../../helpers/session";
 import {

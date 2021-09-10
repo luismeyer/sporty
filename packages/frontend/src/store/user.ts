@@ -5,11 +5,11 @@ import {
   FrontendUser,
   LoginResponse,
   UserResponse,
-} from "@qify/api";
+} from "@sporty/api";
 
 import { fetchApi } from "../api";
 import { RootState } from "./";
-export const storageKey = "qify-token";
+export const storageKey = "sporty-token";
 
 export type UserState = {
   loading: boolean;

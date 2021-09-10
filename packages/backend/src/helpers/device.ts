@@ -1,4 +1,4 @@
-import { User } from "@qify/api";
+import { User } from "@sporty/api";
 
 import { callSpotify, spotify } from "../services/spotify";
 

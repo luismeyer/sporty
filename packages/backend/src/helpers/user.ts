@@ -1,6 +1,6 @@
 import { Request } from "express";
 
-import { FrontendUser, User } from "@qify/api";
+import { FrontendUser, User } from "@sporty/api";
 
 import { getItem, queryItems, sessionIndex, updateItem } from "../services/db";
 import { callSpotify, spotify } from "../services/spotify";

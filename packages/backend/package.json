@@ -1,5 +1,5 @@
 {
-  "name": "@qify/backend",
+  "name": "@sporty/backend",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
@@ -9,7 +9,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@qify/api": "1.0.0",
+    "@sporty/api": "1.0.0",
     "dayjs": "^1.10.6",
     "express": "^4.17.1",
     "node-fetch": "^2.6.1",

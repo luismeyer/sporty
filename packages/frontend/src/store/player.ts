@@ -1,6 +1,6 @@
 import { Commit, Module } from "vuex";
 
-import { Player, PlayerResponse } from "@qify/api";
+import { Player, PlayerResponse } from "@sporty/api";
 
 import { fetchApi } from "../api";
 import { RootState } from "../store/index";

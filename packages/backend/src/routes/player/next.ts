@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 
-import { PlayerResponse, Track, User } from "@qify/api";
+import { PlayerResponse, Track, User } from "@sporty/api";
 
 import { popQueueItem } from "../../helpers/queue";
 import { playTrackInSession } from "../../helpers/track";

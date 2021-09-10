@@ -46,7 +46,7 @@
 </template>
 
 <script lang="ts">
-import { FrontendUser } from "@qify/api";
+import { FrontendUser } from "@sporty/api";
 import { defineComponent, PropType } from "vue";
 
 export default defineComponent({
