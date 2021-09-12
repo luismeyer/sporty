@@ -91,8 +91,8 @@ export default defineComponent({
 .player {
   display: grid;
   position: fixed;
-  left: 24px;
-  right: 24px;
+  left: 16px;
+  right: 16px;
   bottom: 90px;
   background-color: #272727;
   border-radius: 16px;
@@ -133,6 +133,9 @@ export default defineComponent({
 .player-artists {
   font-size: 16px;
   opacity: 0.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .player-icons {

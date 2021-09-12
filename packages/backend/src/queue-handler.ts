@@ -11,8 +11,8 @@ import { getItem } from "./services/db";
 import { callSpotify, spotify } from "./services/spotify";
 import {
   deleteStateMachine,
-  stateMachineArn,
-  stopSessionExecution,
+  stateMachineTimeout,
+  stopStateMachineExecution,
   updateStateMachine,
 } from "./services/state-machine";
 import { syncPlayer } from "./helpers/player";
@@ -28,20 +28,16 @@ export const handler: Handler<{ session?: string }> = async (event) => {
   }
 
   // Stop the running execution if exists
-  await stopSessionExecution(session);
+  await stopStateMachineExecution(session);
 
   const users = await sessionUsers(session.id);
 
   // Delete Machine if all Users left or session ran in the timeout
   if (users.length === 0 || dayjs().isAfter(session.timeout)) {
     await deleteSession(session, users);
-    await deleteStateMachine(session.id);
 
     return "delete success";
   }
-
-  // Time in MS when the next Queue Lambda will be executed
-  let time: number | undefined;
 
   const players = users.filter((user) => user.isPlayer);
 
@@ -63,17 +59,5 @@ export const handler: Handler<{ session?: string }> = async (event) => {
     await syncPlayer(activePlayer, players, queueItem.track);
   }
 
-  const res = await callSpotify(activePlayer, () =>
-    spotify.getMyCurrentPlayingTrack()
-  );
-
-  if (res) {
-    const {
-      body: { item, progress_ms },
-    } = res;
-
-    time = item && progress_ms ? item.duration_ms - progress_ms : undefined;
-  }
-
-  return await updateStateMachine(session, time);
+  return await updateStateMachine(session, activePlayer);
 };

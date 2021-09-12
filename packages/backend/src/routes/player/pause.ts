@@ -7,7 +7,7 @@ import { pausePlayer as pausePlayerHelper } from "../../helpers/player";
 import { authorizeRequest, sessionUsers } from "../../helpers/user";
 import { getItem } from "../../services/db";
 import { callSpotify, spotify } from "../../services/spotify";
-import { stopSessionExecution } from "../../services/state-machine";
+import { stopStateMachineExecution } from "../../services/state-machine";
 import { transformTrack } from "../../helpers/track";
 
 export const pausePlayer: RequestHandler<unknown, PlayerResponse> = async (
@@ -48,7 +48,7 @@ export const pausePlayer: RequestHandler<unknown, PlayerResponse> = async (
     return res.json({ success: false, error: "ALREADY_UPDATED" });
   }
 
-  await stopSessionExecution(session);
+  await stopStateMachineExecution(session);
 
   const users = await sessionUsers(session.id);
   await pausePlayerHelper(users);

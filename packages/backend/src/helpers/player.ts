@@ -1,17 +1,26 @@
 import { Track, User } from "@sporty/api";
 
 import { callSpotify, generateUri, spotify } from "../services/spotify";
+import { transformTrack } from "./track";
+
+type PlayOptions =
+  | undefined
+  | {
+      uris?: ReadonlyArray<string> | undefined;
+      position_ms?: number | undefined;
+      player: User;
+    };
 
 const findDataForSync = async (initiator: User) => {
   const ownerPlayback = await callSpotify(initiator, () =>
     spotify.getMyCurrentPlaybackState()
   );
 
-  if (!ownerPlayback?.body.item) {
+  if (!ownerPlayback?.body.item || ownerPlayback.body.item.type === "episode") {
     return false;
   }
 
-  const { id } = ownerPlayback.body.item;
+  const track = await transformTrack(initiator, ownerPlayback.body.item);
 
   // Get the Position of the Track or Fallback to zero
   const position = await callSpotify(initiator, () =>
@@ -19,7 +28,7 @@ const findDataForSync = async (initiator: User) => {
   ).then((res) => res?.body.progress_ms ?? 0);
 
   return {
-    id,
+    track,
     position,
   };
 };
@@ -28,26 +37,28 @@ export const syncPlayer = async (
   initiator: User,
   users: User[],
   track?: Track
-): Promise<boolean> => {
+): Promise<Track | undefined> => {
   const players = users.filter((user) => user.isPlayer);
 
-  let id: string;
-  let position: number;
+  let song = track;
+  let songPosition = 0;
 
-  if (track) {
-    id = track.id;
-    position = 0;
-  } else {
+  if (!track) {
     const data = await findDataForSync(initiator);
-    if (!data) return false;
+    if (!data) return;
 
-    id = data.id;
-    position = data.position;
+    song = data.track;
+    songPosition = data.position;
   }
 
-  const songUri = generateUri(id);
+  // Error if no song is given
+  if (!song) {
+    return;
+  }
 
-  await Promise.all(
+  const songUri = generateUri(song.id);
+
+  const playOptions: PlayOptions[] = await Promise.all(
     players.map(async (player) => {
       const playerPlayback = await callSpotify(player, () =>
         spotify.getMyCurrentPlaybackState()
@@ -58,24 +69,32 @@ export const syncPlayer = async (
       }
 
       // Play if the same song is on
-      if (playerPlayback.body.item?.id === id) {
+      if (playerPlayback.body.item?.id === song?.id) {
         // Seek the correct position
-        if (playerPlayback.body.progress_ms !== position) {
-          await callSpotify(player, () => spotify.seek(position));
+        if (playerPlayback.body.progress_ms !== songPosition) {
+          await callSpotify(player, () => spotify.seek(songPosition));
         }
 
         await callSpotify(player, () => spotify.play());
-        return;
+        return { player };
       }
 
-      // Start a new Playback
-      await callSpotify(player, () =>
-        spotify.play({ position_ms: position, uris: [songUri] })
-      );
+      return { position_ms: songPosition, uris: [songUri], player };
     })
   );
 
-  return true;
+  // Start playback
+  await Promise.all(
+    playOptions.map((options) => {
+      if (!options) {
+        return;
+      }
+
+      return callSpotify(options.player, () => spotify.play(options));
+    })
+  );
+
+  return song;
 };
 
 export const pausePlayer = async (users: User[]) => {

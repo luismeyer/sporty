@@ -1,33 +1,15 @@
 import { RequestHandler } from "express";
 
-import { PlayerResponse, Track, User } from "@sporty/api";
+import { PlayerResponse, Session } from "@sporty/api";
 
 import { popQueueItem } from "../../helpers/queue";
 import { playTrackInSession } from "../../helpers/track";
 import { authorizeRequest } from "../../helpers/user";
-
-const nextPlayerSession = async (
-  user: User,
-  track: Track
-): Promise<PlayerResponse> => {
-  const response = await playTrackInSession(user, track);
-
-  if (!response) {
-    return { success: false, error: "NO_SESSION" };
-  }
-
-  return {
-    success: true,
-    body: {
-      isActive: true,
-      info: {
-        track: response,
-        isPlaying: true,
-        progress: 0,
-      },
-    },
-  };
-};
+import { getItem } from "../../services/db";
+import {
+  stopStateMachineExecution,
+  updateStateMachine,
+} from "../../services/state-machine";
 
 export const nextPlayer: RequestHandler<unknown, PlayerResponse> = async (
   req,
@@ -43,11 +25,37 @@ export const nextPlayer: RequestHandler<unknown, PlayerResponse> = async (
     return res.json({ success: false, error: "NO_SESSION" });
   }
 
+  const session = await getItem<Session>(user.session);
+
+  if (!session) {
+    return res.json({ success: false, error: "NO_SESSION" });
+  }
+
   const item = await popQueueItem(user);
 
   if (!item) {
     return res.json({ success: false, error: "INTERNAL_ERROR" });
   }
 
-  res.json(await nextPlayerSession(user, item.track));
+  await stopStateMachineExecution(session);
+
+  const response = await playTrackInSession(user, item.track);
+
+  if (!response) {
+    return { success: false, error: "NO_SESSION" };
+  }
+
+  await updateStateMachine(session, user);
+
+  res.json({
+    success: true,
+    body: {
+      isActive: true,
+      info: {
+        track: response,
+        isPlaying: true,
+        progress: 0,
+      },
+    },
+  });
 };

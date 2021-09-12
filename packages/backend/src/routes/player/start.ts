@@ -9,7 +9,7 @@ import { authorizeRequest, sessionUsers } from "../../helpers/user";
 import { getItem } from "../../services/db";
 import { callSpotify, spotify } from "../../services/spotify";
 import {
-  stopSessionExecution,
+  stopStateMachineExecution,
   updateStateMachine,
 } from "../../services/state-machine";
 
@@ -43,28 +43,20 @@ export const startPlayer: RequestHandler<unknown, PlayerResponse> = async (
     spotify.getMyCurrentPlaybackState()
   );
 
-  if (!playbackResponse) {
+  if (!playbackResponse || !playbackResponse.body.item) {
     return res.json({ success: false, error: "INTERNAL_ERROR" });
   }
 
-  if (playbackResponse.body.is_playing) {
-    return res.json({ success: false, error: "ALREADY_UPDATED" });
-  }
-
-  await stopSessionExecution(session);
+  await stopStateMachineExecution(session);
 
   const users = await sessionUsers(session.id);
-  await syncPlayer(user, users);
+  const track = await syncPlayer(user, users);
 
-  const track = playbackResponse.body.item as SpotifyApi.TrackObjectFull;
-
-  await updateStateMachine(session, track.duration_ms);
-
-  const currentTrack = await transformTrack(user, track);
-
-  if (!currentTrack) {
+  if (!track) {
     return res.json({ success: false, error: "INTERNAL_ERROR" });
   }
+
+  await updateStateMachine(session, user);
 
   res.json({
     success: true,
@@ -72,7 +64,7 @@ export const startPlayer: RequestHandler<unknown, PlayerResponse> = async (
       isActive: true,
       info: {
         progress: playbackResponse.body.progress_ms ?? 0,
-        track: currentTrack,
+        track: track,
         isPlaying: true,
       },
     },

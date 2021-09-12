@@ -4,6 +4,10 @@ import qrcode from "qrcode";
 import { FrontendSession, FrontendUser, Session, User } from "@sporty/api";
 
 import { deleteItem, getItem, putItem, updateItem } from "../services/db";
+import {
+  deleteStateMachine,
+  stopStateMachineExecution,
+} from "../services/state-machine";
 import { frontendUrl } from "./const";
 import { randomNumber } from "./random";
 import { removeUserFromSession } from "./user";
@@ -83,7 +87,11 @@ export const updateSessionTimeout = async (
 };
 
 export const deleteSession = async (session: Session, users: User[]) => {
+  await stopStateMachineExecution(session);
+
   await deleteItem(session.id);
+
+  await deleteStateMachine(session.id);
 
   await Promise.all(users.map(removeUserFromSession));
 };

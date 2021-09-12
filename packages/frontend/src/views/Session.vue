@@ -47,7 +47,6 @@ export default defineComponent({
     const store = useStore();
 
     const loadSession = () => {
-      console.log("load session from session");
       return store.dispatch("fetchSession");
     };
 

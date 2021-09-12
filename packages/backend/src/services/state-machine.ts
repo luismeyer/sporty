@@ -1,9 +1,11 @@
-import { Session } from "@sporty/api";
 import AWS from "aws-sdk";
 
-import { queueLambdaArn, stateMachineRoleArn, __DEV__ } from "../helpers/const";
+import { Session, User } from "@sporty/api";
+
+import { __DEV__, queueLambdaArn, stateMachineRoleArn } from "../helpers/const";
 import { timer } from "../helpers/timer";
 import { updateItem } from "./db";
+import { callSpotify, spotify } from "./spotify";
 
 const stepFunctions = new AWS.StepFunctions({ region: "eu-central-1" });
 
@@ -12,7 +14,7 @@ const MACHINE_DEFAULT_WAITING_TIME = 60;
 
 const definition = (timeInMS?: number) => {
   const time = timeInMS
-    ? Math.floor((timeInMS - MACHINE_CREATION_TIMEOUT) / 1000)
+    ? Math.floor((timeInMS - MACHINE_CREATION_TIMEOUT - 1000) / 1000)
     : MACHINE_DEFAULT_WAITING_TIME;
 
   const Seconds = time > 0 ? time : MACHINE_DEFAULT_WAITING_TIME;
@@ -54,10 +56,15 @@ const updateExecutionArn = (session: string, executionArn: string) => {
   });
 };
 
-export const stopSessionExecution = async (session: Session) => {
+export const stopStateMachineExecution = async (session: Session) => {
   if (!session.executionArn) {
     return;
   }
+
+  await updateItem(session.id, {
+    expressionAttributeNames: { "#executionArn": "executionArn" },
+    updateExpression: "REMOVE #executionArn",
+  });
 
   return stepFunctions
     .stopExecution({ executionArn: session.executionArn })
@@ -94,8 +101,10 @@ export const stateMachineArn = async (session: string) => {
 
 export const createStateMachine = async (
   session: Session,
-  timeInMS?: number
+  player: User
 ): Promise<string> => {
+  const timeInMS = await stateMachineTimeout(player);
+
   // Generate definition json
   const machineDefinition = definition(timeInMS);
 
@@ -124,8 +133,10 @@ export const createStateMachine = async (
 
 export const updateStateMachine = async (
   session: Session,
-  timeInMS?: number
+  player: User
 ): Promise<string | undefined> => {
+  const timeInMS = await stateMachineTimeout(player);
+
   // Generate definition json
   const machineDefinition = definition(timeInMS);
 
@@ -164,4 +175,24 @@ export const deleteStateMachine = async (sessionId: string) => {
   }
 
   return stepFunctions.deleteStateMachine({ stateMachineArn: arn }).promise();
+};
+
+export const stateMachineTimeout = async (
+  user: User
+): Promise<number | undefined> => {
+  const res = await callSpotify(user, () => spotify.getMyCurrentPlayingTrack());
+
+  if (!res) {
+    return;
+  }
+
+  const {
+    body: { item, progress_ms },
+  } = res;
+
+  if (progress_ms === null || item === null) {
+    return;
+  }
+
+  return item.duration_ms - progress_ms;
 };

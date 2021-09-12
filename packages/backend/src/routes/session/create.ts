@@ -45,23 +45,7 @@ export const createSession: RequestHandler<unknown, SessionResponse> = async (
     await syncPlayer(user, [user], item.track);
   }
 
-  let timeInMS: number | undefined;
-
-  // Calculate time based on the current Track
-  if (await hasActiveDevice(user)) {
-    const response = await callSpotify(user, () =>
-      spotify.getMyCurrentPlayingTrack()
-    );
-
-    if (response) {
-      const { item, progress_ms } = response.body;
-
-      timeInMS =
-        item && progress_ms ? item.duration_ms - progress_ms : undefined;
-    }
-  }
-
-  await createStateMachine(session, timeInMS);
+  await createStateMachine(session, user);
 
   const frontendUser = await transformUser(user);
 
