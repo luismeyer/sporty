@@ -47,7 +47,7 @@ export default defineComponent({
     const store = useStore();
 
     const loadSession = () => {
-      return store.dispatch("fetchSession");
+      return store.dispatch("fetchData");
     };
 
     loadSession();

@@ -1,73 +1,50 @@
-import { RequestHandler } from "express";
+import { RequestHandler } from 'express';
 
-import { PlayerResponse, Session } from "@sporty/api";
+import { PlayerResponse, Session } from '@sporty/api';
 
-import { hasActiveDevice } from "../../helpers/device";
-import { pausePlayer as pausePlayerHelper } from "../../helpers/player";
-import { authorizeRequest, sessionUsers } from "../../helpers/user";
-import { getItem } from "../../services/db";
-import { callSpotify, spotify } from "../../services/spotify";
-import { stopStateMachineExecution } from "../../services/state-machine";
-import { transformTrack } from "../../helpers/track";
+import { getItem } from '../../services/db';
+import { PlayerService } from '../../services/player.service';
+import { RequestService } from '../../services/request.service';
+import { SessionService } from '../../services/session.service';
+import { callSpotify, spotify } from '../../services/spotify';
+import { stopStateMachineExecution } from '../../services/state-machine';
+import { UserService } from '../../services/user';
 
 export const pausePlayer: RequestHandler<unknown, PlayerResponse> = async (
   req,
   res
 ) => {
-  const user = await authorizeRequest(req.headers);
+  const requestService = new RequestService(req);
+
+  const user = await requestService.getUser();
 
   if (!user) {
     return res.json({ success: false, error: "INVALID_TOKEN" });
   }
 
-  if (!user.session) {
+  const session = await requestService.getSession();
+
+  if (!session) {
     return res.json({ success: false, error: "NO_SESSION" });
   }
 
-  const session = await getItem<Session>(user.session);
-
-  if (!session) {
-    return res.json({ success: false, error: "INTERNAL_ERROR" });
-  }
-
-  const activeDevice = await hasActiveDevice(user);
+  const userService = new UserService(user);
+  const activeDevice = await userService.hasActiveDevice();
 
   if (!activeDevice) {
     return res.json({ success: false, error: "NO_ACTIVE_DEVICE" });
   }
 
-  const playbackResponse = await callSpotify(user, () =>
-    spotify.getMyCurrentPlaybackState()
-  );
-
-  if (!playbackResponse || playbackResponse.body.item?.type !== "track") {
-    return res.json({ success: false, error: "INTERNAL_ERROR" });
-  }
-
-  if (!playbackResponse.body.is_playing) {
-    return res.json({ success: false, error: "ALREADY_UPDATED" });
-  }
-
   await stopStateMachineExecution(session);
 
-  const users = await sessionUsers(session.id);
-  await pausePlayerHelper(users);
+  const sessionService = new SessionService(session);
+  const users = await sessionService.getUsers();
 
-  const track = await transformTrack(user, playbackResponse.body.item);
-
-  if (!track) {
-    return res.json({ success: false, error: "INTERNAL_ERROR" });
-  }
+  const playerService = new PlayerService(users, user);
+  const playerResponse = await playerService.pause();
 
   res.json({
     success: true,
-    body: {
-      isActive: true,
-      info: {
-        isPlaying: false,
-        progress: playbackResponse.body.progress_ms ?? 0,
-        track,
-      },
-    },
+    body: playerResponse,
   });
 };

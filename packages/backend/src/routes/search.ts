@@ -1,11 +1,11 @@
-import { RequestHandler } from "express";
+import { RequestHandler } from 'express';
 
-import { SearchResponse } from "@sporty/api";
+import { SearchResponse } from '@sporty/api';
 
-import { filterNullish } from "../helpers/array";
-import { transformTrack } from "../helpers/track";
-import { authorizeRequest } from "../helpers/user";
-import { callSpotify, spotify } from "../services/spotify";
+import { filterNullish } from '../helpers/array';
+import { RequestService } from '../services/request.service';
+import { callSpotify, spotify } from '../services/spotify';
+import { transformTrack } from '../transformers/track';
 
 type Query = {
   query?: string;
@@ -22,7 +22,8 @@ export const search: RequestHandler<unknown, SearchResponse, unknown, Query> =
       });
     }
 
-    const user = await authorizeRequest(req.headers);
+    const requestService = new RequestService(req);
+    const user = await requestService.getUser();
 
     if (!user) {
       return res.json({

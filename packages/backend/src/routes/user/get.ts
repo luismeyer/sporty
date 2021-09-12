@@ -1,14 +1,16 @@
-import { RequestHandler } from "express";
+import { RequestHandler } from 'express';
 
-import { UserResponse } from "@sporty/api";
+import { UserResponse } from '@sporty/api';
 
-import { authorizeRequest, transformUser } from "../../helpers/user";
+import { RequestService } from '../../services/request.service';
+import { transformUser } from '../../transformers/user';
 
 export const getUser: RequestHandler<unknown, UserResponse> = async (
   req,
   res
 ) => {
-  const user = await authorizeRequest(req.headers);
+  const requestService = new RequestService(req);
+  const user = await requestService.getUser();
 
   if (!user) {
     return res.json({

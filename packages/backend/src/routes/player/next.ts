@@ -1,11 +1,11 @@
 import { RequestHandler } from "express";
 
-import { PlayerResponse, Session } from "@sporty/api";
+import { PlayerResponse } from "@sporty/api";
 
-import { popQueueItem } from "../../helpers/queue";
-import { playTrackInSession } from "../../helpers/track";
-import { authorizeRequest } from "../../helpers/user";
-import { getItem } from "../../services/db";
+import { PlayerService } from "../../services/player.service";
+import { QueueService } from "../../services/queue.service";
+import { RequestService } from "../../services/request.service";
+import { SessionService } from "../../services/session.service";
 import {
   stopStateMachineExecution,
   updateStateMachine,
@@ -15,23 +15,28 @@ export const nextPlayer: RequestHandler<unknown, PlayerResponse> = async (
   req,
   res
 ) => {
-  const user = await authorizeRequest(req.headers);
+  const requestService = new RequestService(req);
+
+  const user = await requestService.getUser();
 
   if (!user) {
     return res.json({ success: false, error: "INVALID_TOKEN" });
   }
 
-  if (!user.session) {
-    return res.json({ success: false, error: "NO_SESSION" });
-  }
-
-  const session = await getItem<Session>(user.session);
+  const session = await requestService.getSession();
 
   if (!session) {
     return res.json({ success: false, error: "NO_SESSION" });
   }
 
-  const item = await popQueueItem(user);
+  const sessionService = new SessionService(session);
+  const sessionUsers = await sessionService.getUsers();
+
+  const playerService = new PlayerService(sessionUsers, user);
+
+  const queueService = new QueueService(session, sessionUsers, user);
+
+  const item = await queueService.popItem();
 
   if (!item) {
     return res.json({ success: false, error: "INTERNAL_ERROR" });
@@ -39,23 +44,12 @@ export const nextPlayer: RequestHandler<unknown, PlayerResponse> = async (
 
   await stopStateMachineExecution(session);
 
-  const response = await playTrackInSession(user, item.track);
-
-  if (!response) {
-    return { success: false, error: "NO_SESSION" };
-  }
+  const playerResponse = await playerService.start(item.track);
 
   await updateStateMachine(session, user);
 
   res.json({
     success: true,
-    body: {
-      isActive: true,
-      info: {
-        track: response,
-        isPlaying: true,
-        progress: 0,
-      },
-    },
+    body: playerResponse,
   });
 };

@@ -26,11 +26,12 @@ export const sessionModule: Module<SessionState, RootState> = {
   },
 
   actions: {
-    async fetchSession({ commit, dispatch }) {
-      commit("UPDATE_SESSION_LOADING", true);
+    async fetchSession({ commit, state }) {
+      if (state.loading) {
+        return;
+      }
 
-      // Reload the player
-      dispatch("fetchPlayer");
+      commit("UPDATE_SESSION_LOADING", true);
 
       const response = await fetchApi<SessionResponse>("session");
 

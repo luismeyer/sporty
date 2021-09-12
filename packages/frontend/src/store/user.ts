@@ -51,7 +51,11 @@ export const userModule: Module<UserState, RootState> = {
   },
 
   actions: {
-    async fetchUser({ commit }) {
+    async fetchUser({ commit, state }) {
+      if (state.loading) {
+        return;
+      }
+
       commit("UPDATE_USER_LOADING", true);
 
       const response = await fetchApi<UserResponse>("user");

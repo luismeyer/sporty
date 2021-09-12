@@ -2,13 +2,10 @@ import { RequestHandler } from "express";
 
 import { Session, SessionResponse } from "@sporty/api";
 
-import { transformSession } from "../../helpers/session";
-import {
-  authorizeRequest,
-  sessionUsers,
-  transformUsers,
-} from "../../helpers/user";
 import { getItem, updateItem } from "../../services/db";
+import { RequestService } from "../../services/request.service";
+import { SessionService } from "../../services/session.service";
+import { PlayerService } from "../../services/player.service";
 
 type Params = {
   session: string;
@@ -29,10 +26,11 @@ export const joinSession: RequestHandler<
   const session = await getItem<Session>(String(sessionId));
 
   if (!session) {
-    return res.json({ success: false, error: "INTERNAL_ERROR" });
+    return res.json({ success: false, error: "WRONG_PARAMETER" });
   }
 
-  const user = await authorizeRequest(req.headers);
+  const requestService = new RequestService(req);
+  const user = await requestService.getUser();
 
   if (!user) {
     return res.json({ success: false, error: "INVALID_TOKEN" });
@@ -40,12 +38,6 @@ export const joinSession: RequestHandler<
 
   if (user.session) {
     return res.json({ success: false, error: "ALREADY_UPDATED" });
-  }
-
-  const users = await sessionUsers(session.id);
-
-  if (users.length === 0) {
-    return res.json({ success: false, error: "WRONG_PARAMETER" });
   }
 
   await updateItem(user.id, {
@@ -60,10 +52,14 @@ export const joinSession: RequestHandler<
     updateExpression: "SET #isOwner = :isOwner, #session = :session",
   });
 
-  const updatedUsers = await sessionUsers(session.id);
+  const sessionService = new SessionService(session);
+  const sessionUsers = await sessionService.getUsers();
+
+  const playerService = new PlayerService(sessionUsers, user);
+  playerService.sync();
 
   res.json({
     success: true,
-    body: await transformSession(session, await transformUsers(updatedUsers)),
+    body: await sessionService.get(),
   });
 };

@@ -1,8 +1,8 @@
-import { RequestHandler } from "express";
+import { RequestHandler } from 'express';
 
-import { LoginResponse } from "@sporty/api";
+import { LoginResponse } from '@sporty/api';
 
-import { authorizeURL } from "../../services/spotify";
+import { authorizeURL } from '../../services/spotify';
 
 export const redirectUri = "http://localhost:3000/authorize";
 

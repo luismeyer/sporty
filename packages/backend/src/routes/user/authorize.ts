@@ -1,13 +1,13 @@
-import crypto from "crypto";
-import { RequestHandler } from "express";
-import { v4 } from "uuid";
+import crypto from 'crypto';
+import { RequestHandler } from 'express';
+import { v4 } from 'uuid';
 
-import { AuthorizeResponse, User } from "@sporty/api";
+import { AuthorizeResponse, User } from '@sporty/api';
 
-import { sportySecret } from "../../helpers/const";
-import { updateTokens } from "../../helpers/user";
-import { putItem, queryItems, spotifyIdIndex } from "../../services/db";
-import { callSpotify, codeGrant, spotify } from "../../services/spotify";
+import { sportySecret } from '../../helpers/const';
+import { putItem, queryItems, spotifyIdIndex } from '../../services/db';
+import { callSpotify, codeGrant, spotify } from '../../services/spotify';
+import { UserService } from '../../services/user';
 
 const hashId = (id: string) => {
   return crypto.createHmac("sha256", sportySecret).update(id).digest("hex");
@@ -78,7 +78,8 @@ export const authorizeUser: RequestHandler<
 
   // Update tokens and return id
   if (user) {
-    await updateTokens(user.id, access_token, refresh_token);
+    const userService = new UserService(user);
+    await userService.updateTokens(access_token, refresh_token);
 
     return res.json({ success: true, body: { token: user.id } });
   }

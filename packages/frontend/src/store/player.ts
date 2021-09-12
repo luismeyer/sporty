@@ -40,7 +40,11 @@ export const playerModule: Module<PlayerState, RootState> = {
   },
 
   actions: {
-    async fetchPlayer({ commit }) {
+    async fetchPlayer({ commit, state }) {
+      if (state.loading) {
+        return;
+      }
+
       await playerAction(commit, "player");
     },
 
@@ -54,7 +58,7 @@ export const playerModule: Module<PlayerState, RootState> = {
 
     async nextPlayer({ commit, dispatch }) {
       await playerAction(commit, "player/next");
-      dispatch("fetchQueue");
+      dispatch("fetchData");
     },
   },
 };

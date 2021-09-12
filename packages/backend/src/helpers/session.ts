@@ -1,16 +1,9 @@
-import dayjs from "dayjs";
-import qrcode from "qrcode";
+import dayjs from 'dayjs';
 
-import { FrontendSession, FrontendUser, Session, User } from "@sporty/api";
+import { Session, User } from '@sporty/api';
 
-import { deleteItem, getItem, putItem, updateItem } from "../services/db";
-import {
-  deleteStateMachine,
-  stopStateMachineExecution,
-} from "../services/state-machine";
-import { frontendUrl } from "./const";
-import { randomNumber } from "./random";
-import { removeUserFromSession } from "./user";
+import { getItem, putItem } from '../services/db';
+import { randomNumber } from './random';
 
 const createSessionId = () => String(randomNumber(1000, 9999));
 
@@ -38,62 +31,3 @@ export const generateSession = async (
     timeout: dayjs().add(5, "minutes").toISOString(),
   });
 };
-
-const svgToDataURL = (svgStr: string) => {
-  const encoded = encodeURIComponent(svgStr)
-    .replace(/'/g, "%27")
-    .replace(/"/g, "%22");
-
-  const header = "data:image/svg+xml,";
-  const dataUrl = header + encoded;
-
-  return dataUrl;
-};
-
-export const transformSession = async (
-  session: Session,
-  users: FrontendUser[]
-): Promise<FrontendSession> => {
-  const url = frontendUrl + `/join?session=${session.id}`;
-
-  const svg = await qrcode.toString(url, {
-    type: "svg",
-    margin: 1.5,
-  });
-  const qrCode = svgToDataURL(svg);
-
-  return {
-    session: session.id,
-    timeout: session.timeout,
-    url,
-    qrCode,
-    users,
-  };
-};
-
-export const updateSessionTimeout = async (
-  session: Session,
-  timeout: string
-) => {
-  await updateItem(session.id, {
-    expressionAttributeNames: {
-      "#timeout": "timeout",
-    },
-    expressionAttributeValues: {
-      ":timeout": timeout,
-    },
-    updateExpression: "SET #timeout = :timeout ",
-  });
-};
-
-export const deleteSession = async (session: Session, users: User[]) => {
-  await stopStateMachineExecution(session);
-
-  await deleteItem(session.id);
-
-  await deleteStateMachine(session.id);
-
-  await Promise.all(users.map(removeUserFromSession));
-};
-
-export const findSessionOwner = (us: User[]) => us.find((u) => u.isOwner);

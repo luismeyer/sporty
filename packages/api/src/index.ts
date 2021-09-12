@@ -1,12 +1,20 @@
-export type User = {
+export type BaseUser = {
   id: string;
   spotifyId: string;
   accessToken: string;
   refreshToken: string;
   queue: string[];
-  session?: string;
+
   isOwner?: boolean;
   isPlayer?: boolean;
+};
+
+export type User = BaseUser & {
+  session?: string;
+};
+
+export type SessionUser = BaseUser & {
+  session: string;
 };
 
 export type FrontendUser = Pick<User, "isOwner" | "isPlayer"> & {
@@ -43,7 +51,7 @@ export type Track = {
 
 export type ActivePlayer = {
   isActive: true;
-  info: {
+  data: {
     isPlaying: boolean;
     track: Track;
     progress: number;

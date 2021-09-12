@@ -1,21 +1,18 @@
 import { Handler } from "aws-lambda";
 import dayjs from "dayjs";
 
-import { Session, User } from "@sporty/api";
+import { Session } from "@sporty/api";
 
-import { hasActiveDevice, hasActiveDevices } from "./helpers/device";
-import { popQueueItem } from "./helpers/queue";
-import { deleteSession, updateSessionTimeout } from "./helpers/session";
-import { sessionUsers } from "./helpers/user";
 import { getItem } from "./services/db";
-import { callSpotify, spotify } from "./services/spotify";
+import { PlayerService } from "./services/player.service";
+import { QueueService } from "./services/queue.service";
+import { SessionService } from "./services/session.service";
 import {
   deleteStateMachine,
-  stateMachineTimeout,
   stopStateMachineExecution,
   updateStateMachine,
 } from "./services/state-machine";
-import { syncPlayer } from "./helpers/player";
+import { UserService } from "./services/user";
 
 export const handler: Handler<{ session?: string }> = async (event) => {
   const sessionId = String(event.session);
@@ -27,36 +24,41 @@ export const handler: Handler<{ session?: string }> = async (event) => {
     return "error no session";
   }
 
+  const sessionService = new SessionService(session);
+
   // Stop the running execution if exists
   await stopStateMachineExecution(session);
 
-  const users = await sessionUsers(session.id);
+  const sessionUsers = await sessionService.getUsers();
 
   // Delete Machine if all Users left or session ran in the timeout
-  if (users.length === 0 || dayjs().isAfter(session.timeout)) {
-    await deleteSession(session, users);
+  if (sessionUsers.length === 0 || dayjs().isAfter(session.timeout)) {
+    await sessionService.delete();
 
     return "delete success";
   }
 
-  const players = users.filter((user) => user.isPlayer);
+  const players = sessionUsers.filter((user) => user.isPlayer);
 
   // Increase timeout if there is atleast one active device
-  if (await hasActiveDevices(players)) {
-    await updateSessionTimeout(
-      session,
-      dayjs().add(5, "minutes").toISOString()
-    );
+  if (await sessionService.hasActiveDevices()) {
+    await sessionService.updateTimeout(dayjs().add(5, "minutes").toISOString());
   }
 
-  const activePlayer =
-    players.find((player) => hasActiveDevice(player)) ?? players[0];
+  const maybeActivePlayer = players.find((player) => {
+    const userService = new UserService(player);
+    return userService.hasActiveDevice();
+  });
 
-  const queueItem = await popQueueItem(activePlayer);
+  const activePlayer = maybeActivePlayer ?? players[0];
+
+  const queueService = new QueueService(session, players, activePlayer);
+  const queueItem = await queueService.popItem();
 
   // Sync player if next track exists
   if (queueItem) {
-    await syncPlayer(activePlayer, players, queueItem.track);
+    const playerService = new PlayerService(players, activePlayer);
+    await playerService.start(queueItem.track);
   }
 
   return await updateStateMachine(session, activePlayer);

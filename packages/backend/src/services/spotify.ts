@@ -7,7 +7,7 @@ import {
   spotifyClientId,
   spotifyClientSecret,
 } from "../helpers/const";
-import { updateTokens } from "../helpers/user";
+import { UserService } from "./user";
 
 const redirectUri = frontendUrl + "/callback";
 
@@ -28,7 +28,7 @@ export const codeGrant = async (code: string) => {
 export const authorizeURL = (...scopes: string[]) =>
   spotify.createAuthorizeURL(scopes, "");
 
-type UserInput = Pick<User, "id" | "accessToken" | "refreshToken">;
+export type UserInput = Pick<User, "id" | "accessToken" | "refreshToken">;
 
 const setTokens = (user: UserInput) => {
   spotify.setAccessToken(user.accessToken);
@@ -43,8 +43,9 @@ const clearTokens = () => {
 export const refreshTokens = async (user: UserInput): Promise<UserInput> => {
   const result = await spotify.refreshAccessToken();
 
-  await updateTokens(
-    user.id,
+  const userService = new UserService(user);
+
+  await userService.updateTokens(
     result.body.access_token,
     result.body.refresh_token
   );

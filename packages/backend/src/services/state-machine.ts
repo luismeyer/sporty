@@ -141,6 +141,7 @@ export const updateStateMachine = async (
   const machineDefinition = definition(timeInMS);
 
   if (__DEV__) {
+    await timer(MACHINE_CREATION_TIMEOUT);
     console.log("Updating Statemachine with definition: ", machineDefinition);
     return "success";
   }
@@ -190,7 +191,7 @@ export const stateMachineTimeout = async (
     body: { item, progress_ms },
   } = res;
 
-  if (progress_ms === null || item === null) {
+  if (progress_ms === null || !item) {
     return;
   }
 

@@ -1,39 +1,34 @@
-import { RequestHandler } from "express";
+import { RequestHandler } from 'express';
 
-import { Session, SessionResponse } from "@sporty/api";
+import { Session, SessionResponse } from '@sporty/api';
 
-import { transformSession } from "../../helpers/session";
-import {
-  authorizeRequest,
-  sessionUsers,
-  transformUsers,
-} from "../../helpers/user";
-import { getItem } from "../../services/db";
+import { getItem } from '../../services/db';
+import { RequestService } from '../../services/request.service';
+import { SessionService } from '../../services/session.service';
+import { transformSession } from '../../transformers/session';
+import { transformUsers } from '../../transformers/user';
 
 export const getSession: RequestHandler<unknown, SessionResponse> = async (
   req,
   res
 ) => {
-  const user = await authorizeRequest(req.headers);
+  const requestService = new RequestService(req);
+  const user = await requestService.getUser();
 
   if (!user) {
     return res.json({ success: false, error: "INVALID_TOKEN" });
   }
 
-  if (!user.session) {
+  const session = await requestService.getSession();
+
+  if (!session) {
     return res.json({ success: false, error: "NO_SESSION" });
   }
 
-  const session = await getItem<Session>(user.session);
-
-  if (!session) {
-    return res.json({ success: false, error: "INTERNAL_ERROR" });
-  }
-
-  const users = await sessionUsers(user.session);
+  const sessionService = new SessionService(session);
 
   res.json({
     success: true,
-    body: await transformSession(session, await transformUsers(users)),
+    body: await sessionService.get(),
   });
 };

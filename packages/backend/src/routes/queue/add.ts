@@ -1,10 +1,12 @@
 import { RequestHandler } from "express";
-import { QueueResponse } from "../../../../api/dist";
 
-import { generateQueue, transformQueue } from "../../helpers/queue";
-import { authorizeRequest, sessionUsers } from "../../helpers/user";
+import { QueueResponse } from "../../../../api/dist";
 import { updateItem } from "../../services/db";
+import { QueueService } from "../../services/queue.service";
+import { RequestService } from "../../services/request.service";
+import { SessionService } from "../../services/session.service";
 import { callSpotify, spotify } from "../../services/spotify";
+import { transformQueue } from "../../transformers/queue";
 
 type Query = {
   songId?: string;
@@ -22,24 +24,30 @@ export const addSong: RequestHandler<unknown, QueueResponse, unknown, Query> =
       });
     }
 
-    const user = await authorizeRequest(req.headers);
+    const requestService = new RequestService(req);
+
+    const user = await requestService.getUser();
 
     if (!user) {
-      return res.json({
-        success: false,
-        error: "INVALID_TOKEN",
-      });
+      return res.json({ success: false, error: "INVALID_TOKEN" });
     }
 
-    // Fetch all Queues from other users in the session
-    const queues = user.session
-      ? await sessionUsers(user.session).then((res) =>
-          res.reduce<string[]>((acc, user) => [...acc, ...user.queue], [])
-        )
-      : [];
+    const session = await requestService.getSession();
+
+    if (!session) {
+      return res.json({ success: false, error: "NO_SESSION" });
+    }
+
+    const sessionService = new SessionService(session);
+    const users = await sessionService.getUsers();
+
+    const queue = users.reduce<string[]>(
+      (acc, user) => [...acc, ...user.queue],
+      []
+    );
 
     // Return if song is in Queue and force is disabled
-    if ([...queues, user.queue].includes(songId) && !force) {
+    if (queue.includes(songId) && !force) {
       return res.json({
         success: false,
         error: "ALREADY_UPDATED",
@@ -58,23 +66,12 @@ export const addSong: RequestHandler<unknown, QueueResponse, unknown, Query> =
       });
     }
 
-    const updateUser = { ...user, queue: [...user.queue, songId] };
+    const queueService = new QueueService(session, users, user);
 
-    // Append Item
-    await updateItem(user.id, {
-      expressionAttributeNames: { "#queue": "queue" },
-      expressionAttributeValues: {
-        ":new_item": [songId],
-        ":empty_list": [],
-      },
-      updateExpression:
-        "SET #queue = list_append(if_not_exists(#queue, :empty_list), :new_item)",
-    });
+    await queueService.appendItem(track.body.id);
 
     res.json({
       success: true,
-      body: {
-        queue: await generateQueue(user).then(transformQueue),
-      },
+      body: await queueService.generateQueueResponse(),
     });
   };

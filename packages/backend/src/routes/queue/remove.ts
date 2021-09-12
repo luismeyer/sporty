@@ -2,9 +2,11 @@ import { RequestHandler } from "express";
 
 import { QueueResponse } from "@sporty/api";
 
-import { generateQueue, transformQueue } from "../../helpers/queue";
-import { authorizeRequest } from "../../helpers/user";
 import { updateItem } from "../../services/db";
+import { QueueService } from "../../services/queue.service";
+import { RequestService } from "../../services/request.service";
+import { SessionService } from "../../services/session.service";
+import { transformQueue } from "../../transformers/queue";
 
 type Query = {
   id?: string;
@@ -23,13 +25,21 @@ export const removeSong: RequestHandler<any, QueueResponse, any, Query> =
       });
     }
 
-    const user = await authorizeRequest(req.headers);
+    const requestService = new RequestService(req);
+
+    const user = await requestService.getUser();
 
     if (!user) {
       return res.json({
         success: false,
         error: "INVALID_TOKEN",
       });
+    }
+
+    const session = await requestService.getSession();
+
+    if (!session) {
+      return res.json({ success: false, error: "NO_SESSION" });
     }
 
     // Dont remove the song if its not in the queue
@@ -50,10 +60,13 @@ export const removeSong: RequestHandler<any, QueueResponse, any, Query> =
       updateExpression: `REMOVE #queue[${songIndex}]`,
     });
 
+    const sessionService = new SessionService(session);
+    const sessionUsers = await sessionService.getUsers();
+
+    const queueService = new QueueService(session, sessionUsers, user);
+
     res.json({
       success: true,
-      body: {
-        queue: await generateQueue(user).then(transformQueue),
-      },
+      body: await queueService.generateQueueResponse(),
     });
   };

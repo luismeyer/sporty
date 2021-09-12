@@ -26,7 +26,7 @@ export default defineComponent({
     const { session } = useState();
     const store = useStore();
 
-    store.dispatch("fetchSession");
+    store.dispatch("fetchData");
 
     const copyLink = () => {
       if (!session.session) {

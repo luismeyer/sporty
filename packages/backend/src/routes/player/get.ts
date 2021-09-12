@@ -1,55 +1,37 @@
 import { RequestHandler } from "express";
 
-import { Player, PlayerResponse } from "@sporty/api";
+import { PlayerResponse } from "@sporty/api";
 
-import { transformTrack } from "../../helpers/track";
-import { authorizeRequest } from "../../helpers/user";
-import { callSpotify, spotify } from "../../services/spotify";
+import { PlayerService } from "../../services/player.service";
+import { RequestService } from "../../services/request.service";
+import { SessionService } from "../../services/session.service";
 
 export const getPlayer: RequestHandler<unknown, PlayerResponse> = async (
   req,
   res
 ) => {
-  const user = await authorizeRequest(req.headers);
+  const requestService = new RequestService(req);
+
+  const user = await requestService.getUser();
 
   if (!user) {
     return res.json({ success: false, error: "INVALID_TOKEN" });
   }
 
-  if (!user.session) {
+  const session = await requestService.getSession();
+
+  if (!session) {
     return res.json({ success: false, error: "NO_SESSION" });
   }
 
-  const playBackState = await callSpotify(user, () =>
-    spotify.getMyCurrentPlaybackState()
-  );
+  const sessionService = new SessionService(session);
+  const sessionUsers = await sessionService.getUsers();
 
-  if (!playBackState) {
-    return res.json({ success: false, error: "INTERNAL_ERROR" });
-  }
-
-  const { body } = playBackState;
-
-  if (body.currently_playing_type !== "track") {
-    return res.json({ success: true, body: { isActive: false } });
-  }
-
-  const track = body.item as SpotifyApi.TrackObjectFull;
-  const currentTrack = await transformTrack(user, track);
-
-  if (!currentTrack) {
-    return res.json({ success: true, body: { isActive: false } });
-  }
+  const playerService = new PlayerService(sessionUsers, user);
+  const playerResponse = await playerService.get();
 
   res.json({
     success: true,
-    body: {
-      isActive: true,
-      info: {
-        progress: playBackState.body.progress_ms ?? 0,
-        track: currentTrack,
-        isPlaying: playBackState.body.is_playing,
-      },
-    },
+    body: playerResponse,
   });
 };

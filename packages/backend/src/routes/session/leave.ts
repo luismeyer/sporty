@@ -1,43 +1,34 @@
-import { RequestHandler } from "express";
+import { RequestHandler } from 'express';
 
-import { MessageResponse, Session } from "@sporty/api";
+import { MessageResponse, Session } from '@sporty/api';
 
-import { deleteSession } from "../../helpers/session";
-import {
-  authorizeRequest,
-  removeUserFromSession,
-  sessionUsers,
-} from "../../helpers/user";
-import { getItem, updateItem } from "../../services/db";
+import { getItem, updateItem } from '../../services/db';
+import { RequestService } from '../../services/request.service';
+import { SessionService } from '../../services/session.service';
 
 export const leaveSession: RequestHandler<unknown, MessageResponse> = async (
   req,
   res
 ) => {
-  const user = await authorizeRequest(req.headers);
+  const requestService = new RequestService(req);
+  const user = await requestService.getUser();
 
   if (!user) {
     return res.json({ success: false, error: "INVALID_TOKEN" });
   }
 
-  if (!user.session) {
-    return res.json({ success: false, error: "ALREADY_UPDATED" });
-  }
-
-  const session = await getItem<Session>(user.session);
+  const session = await requestService.getSession();
 
   if (!session) {
-    return res.json({ success: false, error: "INTERNAL_ERROR" });
+    return res.json({ success: false, error: "NO_SESSION" });
   }
 
-  await removeUserFromSession(user);
+  const sessionService = new SessionService(session);
 
-  const users = await sessionUsers(session.id).then((res) =>
-    res.filter(({ id }) => id !== user.id)
-  );
+  const users = await sessionService.removeUser(user);
 
   if (users.length === 0) {
-    await deleteSession(session, users);
+    await sessionService.delete();
 
     return res.json({
       success: true,

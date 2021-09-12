@@ -2,71 +2,55 @@ import { RequestHandler } from "express";
 
 import { PlayerResponse, Session } from "@sporty/api";
 
-import { hasActiveDevice } from "../../helpers/device";
-import { syncPlayer } from "../../helpers/player";
-import { transformTrack } from "../../helpers/track";
-import { authorizeRequest, sessionUsers } from "../../helpers/user";
 import { getItem } from "../../services/db";
+import { PlayerService } from "../../services/player.service";
+import { RequestService } from "../../services/request.service";
+import { SessionService } from "../../services/session.service";
 import { callSpotify, spotify } from "../../services/spotify";
 import {
   stopStateMachineExecution,
   updateStateMachine,
 } from "../../services/state-machine";
+import { UserService } from "../../services/user";
 
 export const startPlayer: RequestHandler<unknown, PlayerResponse> = async (
   req,
   res
 ) => {
-  const user = await authorizeRequest(req.headers);
+  const requestService = new RequestService(req);
+
+  const user = await requestService.getUser();
 
   if (!user) {
     return res.json({ success: false, error: "INVALID_TOKEN" });
   }
 
-  if (!user.session) {
+  const session = await requestService.getSession();
+
+  if (!session) {
     return res.json({ success: false, error: "NO_SESSION" });
   }
 
-  const session = await getItem<Session>(user.session);
+  const sessionService = new SessionService(session);
 
-  if (!session) {
-    return res.json({ success: false, error: "INTERNAL_ERROR" });
-  }
+  const activeDevices = await sessionService.hasActiveDevices();
 
-  const activeDevice = await hasActiveDevice(user);
-
-  if (!activeDevice) {
+  if (!activeDevices) {
     return res.json({ success: false, error: "NO_ACTIVE_DEVICE" });
-  }
-
-  const playbackResponse = await callSpotify(user, () =>
-    spotify.getMyCurrentPlaybackState()
-  );
-
-  if (!playbackResponse || !playbackResponse.body.item) {
-    return res.json({ success: false, error: "INTERNAL_ERROR" });
   }
 
   await stopStateMachineExecution(session);
 
-  const users = await sessionUsers(session.id);
-  const track = await syncPlayer(user, users);
+  const users = await sessionService.getUsers();
 
-  if (!track) {
-    return res.json({ success: false, error: "INTERNAL_ERROR" });
-  }
+  const playerService = new PlayerService(users, user);
+
+  const player = await playerService.sync();
 
   await updateStateMachine(session, user);
 
   res.json({
     success: true,
-    body: {
-      isActive: true,
-      info: {
-        progress: playbackResponse.body.progress_ms ?? 0,
-        track: track,
-        isPlaying: true,
-      },
-    },
+    body: player,
   });
 };

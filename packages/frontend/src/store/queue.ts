@@ -27,11 +27,12 @@ export const queueModule: Module<QueueState, RootState> = {
   },
 
   actions: {
-    async fetchQueue({ commit, dispatch }) {
-      commit("UPDATE_QUEUE_LOADING", true);
+    async fetchQueue({ commit, state }) {
+      if (state.loading) {
+        return;
+      }
 
-      // Reload the player
-      dispatch("fetchPlayer");
+      commit("UPDATE_QUEUE_LOADING", true);
 
       const response = await fetchApi<QueueResponse>("queue");
 

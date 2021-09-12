@@ -3,7 +3,12 @@
     <Reload :load="refreshQueue" :loading="loading" />
 
     <h1>Your Queue</h1>
-    <div v-if="initialLoading || queueState.queue?.length === 0" class="empty">
+    <div
+      v-if="
+        initialLoading || !queueState.queue || queueState.queue.length === 0
+      "
+      class="empty"
+    >
       <span>
         is {{ initialLoading ? "loading..." : "empty... add something" }}
       </span>
@@ -41,7 +46,7 @@ export default defineComponent({
     const { queue, user } = useState();
     const store = useStore();
 
-    store.dispatch("fetchUser");
+    store.dispatch("fetchData");
 
     const refreshQueue = () => store.dispatch("fetchQueue");
 

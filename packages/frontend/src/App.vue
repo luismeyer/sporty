@@ -42,7 +42,7 @@ export default defineComponent({
       // Ensure the user token is correct
 
       if (userState.value.isAuthenticated) {
-        store.dispatch("fetchUser");
+        store.dispatch("fetchData");
       }
 
       window.addEventListener("resize", handleResize);

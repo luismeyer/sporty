@@ -36,8 +36,7 @@ export default defineComponent({
     const { user } = useState();
     const router = useRouter();
 
-    store.dispatch("fetchSession");
-    store.dispatch("fetchUser");
+    store.dispatch("fetchData");
 
     const leaving = ref(false);
 

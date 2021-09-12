@@ -1,20 +1,21 @@
 import { RequestHandler } from "express";
 
-import { SessionResponse } from "@sporty/api";
+import { SessionResponse, SessionUser } from "@sporty/api";
 
-import { hasActiveDevice } from "../../helpers/device";
-import { popQueueItem } from "../../helpers/queue";
-import { generateSession, transformSession } from "../../helpers/session";
-import { authorizeRequest, transformUser } from "../../helpers/user";
-import { callSpotify, spotify } from "../../services/spotify";
+import { generateSession } from "../../helpers/session";
+import { PlayerService } from "../../services/player.service";
+import { QueueService } from "../../services/queue.service";
+import { RequestService } from "../../services/request.service";
 import { createStateMachine } from "../../services/state-machine";
-import { syncPlayer } from "../../helpers/player";
+import { transformSession } from "../../transformers/session";
+import { transformUser } from "../../transformers/user";
 
 export const createSession: RequestHandler<unknown, SessionResponse> = async (
   req,
   res
 ) => {
-  const user = await authorizeRequest(req.headers);
+  const requestService = new RequestService(req);
+  const user = await requestService.getUser();
 
   if (!user) {
     return res.json({
@@ -23,7 +24,9 @@ export const createSession: RequestHandler<unknown, SessionResponse> = async (
     });
   }
 
-  if (user.session) {
+  const oldSession = await requestService.getSession();
+
+  if (oldSession) {
     return res.json({
       success: false,
       error: "ALREADY_UPDATED",
@@ -39,10 +42,20 @@ export const createSession: RequestHandler<unknown, SessionResponse> = async (
     });
   }
 
-  const item = await popQueueItem(user);
+  const sessionUsers: SessionUser[] = [
+    {
+      ...user,
+      session: session.id,
+    },
+  ];
+
+  const queueService = new QueueService(session, sessionUsers, user);
+  const playerService = new PlayerService(sessionUsers, user);
+
+  const item = await queueService.popItem();
 
   if (item) {
-    await syncPlayer(user, [user], item.track);
+    await playerService.start(item.track);
   }
 
   await createStateMachine(session, user);

@@ -1,12 +1,12 @@
 <template>
   <transition name="player-fade">
     <div class="player" v-if="(!loading || player) && player?.isActive">
-      <img class="track-image" :src="player.info.track.image.url" />
+      <img class="track-image" :src="player.data.track.image.url" />
 
       <div class="player-track">
-        <span class="player-track-name">{{ player.info.track.name }}</span>
+        <span class="player-track-name">{{ player.data.track.name }}</span>
         <span class="player-artists">{{
-          player.info.track.artists.join(", ")
+          player.data.track.artists.join(", ")
         }}</span>
       </div>
 
@@ -18,7 +18,7 @@
           viewBox="0 0 24 24"
           fill="white"
         >
-          <path v-if="player.info.isPlaying" d="M8 7h3v10H8zm5 0h3v10h-3z" />
+          <path v-if="player.data.isPlaying" d="M8 7h3v10H8zm5 0h3v10h-3z" />
           <path v-else d="M7 6v12l10-6z" />
         </svg>
 
@@ -39,12 +39,21 @@
         v-if="loading"
         :spinning="true"
       />
+
+      <div ref="loadingBar" class="loading-bar" />
     </div>
   </transition>
 </template>
 
 <script lang="ts">
-import { computed, defineComponent } from "vue";
+import {
+  computed,
+  defineComponent,
+  onMounted,
+  ref,
+  watch,
+  watchEffect,
+} from "vue";
 
 import Spinner from "./Spinner.vue";
 import { useStore } from "../store";
@@ -57,15 +66,17 @@ export default defineComponent({
     const store = useStore();
 
     // Initial player load
-    store.dispatch("fetchPlayer");
+    store.dispatch("fetchData");
 
     const playerLoading = computed(() => store.state.player.loading);
     const playerState = computed(() => store.state.player.player);
 
+    const progress = ref(0);
+
     const handlePlayPause = async () => {
       if (!playerState.value?.isActive) return;
 
-      if (playerState.value?.info.isPlaying) {
+      if (playerState.value?.data.isPlaying) {
         await store.dispatch("pausePlayer");
       } else {
         await store.dispatch("startPlayer");
@@ -76,9 +87,51 @@ export default defineComponent({
       await store.dispatch("nextPlayer");
     };
 
+    const loadingBar = ref<HTMLDivElement | null>(null);
+    let interval = 0;
+
+    watchEffect(() => {
+      if (!playerState.value?.isActive || !playerState.value.data.isPlaying) {
+        clearInterval(interval);
+        return;
+      }
+
+      if (interval) {
+        clearInterval(interval);
+      }
+
+      interval = setInterval(() => {
+        progress.value = progress.value + 1000;
+      }, 1000);
+    });
+
+    watchEffect(() => {
+      if (!playerState.value?.isActive) {
+        return;
+      }
+
+      progress.value = playerState.value.data.progress;
+    });
+
+    watchEffect(() => {
+      if (!loadingBar.value || !playerState.value?.isActive) {
+        return;
+      }
+
+      const width = progress.value / playerState.value.data.track.duration;
+
+      if (width >= 1) {
+        clearInterval(interval);
+        return;
+      }
+
+      loadingBar.value.style.width = `calc(${width * 100}% - 16px)`;
+    });
+
     return {
       player: playerState,
       loading: playerLoading,
+      loadingBar,
 
       handlePlayPause,
       handleNext,
@@ -95,7 +148,7 @@ export default defineComponent({
   right: 16px;
   bottom: 90px;
   background-color: #272727;
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 8px;
   grid-template-columns: auto 1fr auto;
   grid-gap: 16px;
@@ -154,5 +207,16 @@ export default defineComponent({
 .player-fade-leave-to {
   transform: translate(0, 100px);
   opacity: 0;
+}
+
+.loading-bar {
+  height: 2px;
+  background-color: white;
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 8px;
+  right: 8px;
+  transition: width 0.5s ease;
 }
 </style>

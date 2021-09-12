@@ -24,6 +24,16 @@ export const useStore = (): Store<RootState> => {
 };
 
 export const store = createStore<RootState>({
+  actions: {
+    async fetchData() {
+      await Promise.all([
+        store.dispatch("fetchUser"),
+        store.dispatch("fetchQueue"),
+        store.dispatch("fetchSession"),
+        store.dispatch("fetchPlayer"),
+      ]);
+    },
+  },
   modules: {
     queue: queueModule,
     session: sessionModule,
