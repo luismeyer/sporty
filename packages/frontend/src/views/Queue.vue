@@ -1,6 +1,6 @@
 <template>
   <div class="container-with-reloader">
-    <Reload :load="refreshQueue" :loading="loading" />
+    <Reload :loading="loading" />
 
     <h1>Your Queue</h1>
     <div
@@ -84,7 +84,7 @@ ul {
   justify-items: start;
   padding: 0;
   list-style: none;
-  padding: 0 0 80px;
+  padding: 0 0 150px;
 }
 
 img {

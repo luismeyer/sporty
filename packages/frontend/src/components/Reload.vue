@@ -13,6 +13,7 @@ import {
   toRef,
   watch,
 } from "vue";
+import { useStore } from "../store";
 
 import Spinner from "./Spinner.vue";
 
@@ -24,10 +25,6 @@ export default defineComponent({
   },
 
   props: {
-    load: {
-      required: true,
-      type: Function as PropType<() => Promise<void>>,
-    },
     loading: {
       required: true,
       type: Boolean,
@@ -35,6 +32,7 @@ export default defineComponent({
   },
 
   setup(props) {
+    const store = useStore();
     let timer: number | undefined;
 
     const scrollTop = () => {
@@ -57,7 +55,7 @@ export default defineComponent({
         }
 
         if (!loading.value && window.scrollY === 0) {
-          props.load();
+          store.dispatch("fetchData");
         }
       }, 500);
     };
@@ -112,7 +110,7 @@ export default defineComponent({
 
 .container-with-reloader {
   /* Height is calculated by the Reload-bar height and the Footer-height */
-  height: calc(100vh + 64px - 70px);
+  height: calc(100vh + 64px);
   scroll-snap-type: y mandatory;
 }
 </style>

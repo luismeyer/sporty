@@ -6,7 +6,7 @@ import { PlayerService } from "../../services/player.service";
 import { QueueService } from "../../services/queue.service";
 import { RequestService } from "../../services/request.service";
 import { SessionService } from "../../services/session.service";
-import { StateMachineService } from "../../services/state-machine";
+import { StateMachineService } from "../../services/machine.service";
 
 export const nextPlayer: RequestHandler<unknown, PlayerResponse> = async (
   req,

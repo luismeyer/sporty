@@ -6,7 +6,7 @@ import { PlayerService } from "../../services/player.service";
 import { RequestService } from "../../services/request.service";
 import { SessionService } from "../../services/session.service";
 import { UserService } from "../../services/user";
-import { StateMachineService } from "../../services/state-machine";
+import { StateMachineService } from "../../services/machine.service";
 
 export const pausePlayer: RequestHandler<unknown, PlayerResponse> = async (
   req,

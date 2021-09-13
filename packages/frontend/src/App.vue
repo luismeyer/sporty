@@ -83,7 +83,7 @@ export default defineComponent({
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: white;
-  padding: 16px 24px 70px 24px;
+  padding: 16px 24px 0px;
 }
 
 body {

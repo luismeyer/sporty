@@ -6,7 +6,7 @@ import { generateSession } from "../../helpers/session";
 import { PlayerService } from "../../services/player.service";
 import { QueueService } from "../../services/queue.service";
 import { RequestService } from "../../services/request.service";
-import { StateMachineService } from "../../services/state-machine";
+import { StateMachineService } from "../../services/machine.service";
 import { transformSession } from "../../transformers/session";
 import { transformUser } from "../../transformers/user";
 

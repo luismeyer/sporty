@@ -1,7 +1,7 @@
 import {
   MACHINE_CREATION_TIMEOUT,
   stepFunctions,
-} from "../services/state-machine";
+} from "../services/machine.service";
 import { queueLambdaArn } from "./const";
 
 const MACHINE_DEFAULT_WAITING_TIME = 60;

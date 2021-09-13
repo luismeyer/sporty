@@ -6,7 +6,7 @@ import { UserRepository } from "../repositories/user.repo";
 import { transformSession } from "../transformers/session";
 import { transformUser } from "../transformers/user";
 import { deleteItem } from "./db";
-import { StateMachineService } from "./state-machine";
+import { StateMachineService } from "./machine.service";
 import { UserService } from "./user";
 
 export class SessionService {

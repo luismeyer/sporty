@@ -15,7 +15,7 @@
 
     <img v-if="searchResults.length === 0" src="../assets/search.png" />
 
-    <ul>
+    <ul v-if="searchResults.length > 0">
       <Track
         v-for="track in searchResults"
         :key="track.id"
@@ -117,7 +117,7 @@ input {
 ul {
   list-style: none;
   margin-bottom: 0;
-  padding: 0;
+  padding: 0 0 150px;
   display: grid;
   grid-gap: 24px;
 }

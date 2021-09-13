@@ -7,7 +7,7 @@ import { timer } from "./helpers/timer";
 import {
   MACHINE_CREATION_TIMEOUT,
   StateMachineService,
-} from "./services/state-machine";
+} from "./services/machine.service";
 
 type Event = {
   arn?: string;

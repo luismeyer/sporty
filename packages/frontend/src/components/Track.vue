@@ -108,12 +108,15 @@ export default defineComponent({
 }
 
 .info {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  min-width: 0;
 }
 
 .artists {
   font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .action {
@@ -123,6 +126,14 @@ export default defineComponent({
 .name {
   font-size: 20px;
   font-weight: bold;
+  white-space: nowrap;
+  overflow: scroll;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.name::-webkit-scrollbar {
+  display: none;
 }
 
 button {

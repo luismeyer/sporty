@@ -7,7 +7,7 @@ import {
   machineLambdaName,
   stateMachineRoleArn,
 } from "../helpers/const";
-import { getMachineArn, getMachineDefinition } from "../helpers/state-machine";
+import { getMachineArn, getMachineDefinition } from "../helpers/machine";
 import { SessionRepository } from "../repositories/session.repo";
 import { LambdaService } from "./lambda.service";
 import { callSpotify, spotify } from "./spotify";

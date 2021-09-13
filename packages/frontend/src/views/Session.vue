@@ -1,6 +1,6 @@
 <template>
   <div class="container-with-reloader">
-    <Reload :load="fetch" :loading="sessionState.loading" />
+    <Reload :loading="sessionState.loading" />
 
     <div class="headline">
       <h1>Session</h1>

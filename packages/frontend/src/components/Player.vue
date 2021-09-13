@@ -121,6 +121,7 @@ export default defineComponent({
       const width = progress.value / playerState.value.data.track.duration;
 
       if (width >= 1) {
+        store.dispatch("fetchData");
         clearInterval(interval);
         return;
       }
@@ -146,7 +147,7 @@ export default defineComponent({
   position: fixed;
   left: 16px;
   right: 16px;
-  bottom: 90px;
+  bottom: 80px;
   background-color: #272727;
   border-radius: 8px;
   padding: 8px;
