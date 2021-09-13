@@ -2,198 +2,159 @@ import AWS from "aws-sdk";
 
 import { Session, User } from "@sporty/api";
 
-import { __DEV__, queueLambdaArn, stateMachineRoleArn } from "../helpers/const";
-import { timer } from "../helpers/timer";
-import { updateItem } from "./db";
+import {
+  __DEV__,
+  machineLambdaName,
+  stateMachineRoleArn,
+} from "../helpers/const";
+import { getMachineArn, getMachineDefinition } from "../helpers/state-machine";
+import { SessionRepository } from "../repositories/session.repo";
+import { LambdaService } from "./lambda.service";
 import { callSpotify, spotify } from "./spotify";
 
-const stepFunctions = new AWS.StepFunctions({ region: "eu-central-1" });
+export const stepFunctions = new AWS.StepFunctions({ region: "eu-central-1" });
 
-const MACHINE_CREATION_TIMEOUT = 5000;
-const MACHINE_DEFAULT_WAITING_TIME = 60;
+export const MACHINE_CREATION_TIMEOUT = 5000;
 
-const definition = (timeInMS?: number) => {
-  const time = timeInMS
-    ? Math.floor((timeInMS - MACHINE_CREATION_TIMEOUT - 1000) / 1000)
-    : MACHINE_DEFAULT_WAITING_TIME;
+export class StateMachineService {
+  private name: string;
+  private session: Session;
 
-  const Seconds = time > 0 ? time : MACHINE_DEFAULT_WAITING_TIME;
+  private sessionRepo: SessionRepository;
+  private lambdaService: LambdaService;
 
-  return JSON.stringify({
-    Comment: "State Machine for sporty",
-    StartAt: "Wait",
-    States: {
-      Wait: {
-        Comment:
-          "A Wait state delays the state machine from continuing for a specified time.",
-        Type: "Wait",
-        Seconds,
-        Next: "Invoke",
-      },
-      Invoke: {
-        Type: "Task",
-        Resource: "arn:aws:states:::lambda:invoke",
-        Parameters: {
-          FunctionName: queueLambdaArn,
-          InvocationType: "Event",
-          Payload: {
-            "session.$": "$",
-          },
-        },
-        End: true,
-      },
-    },
-  });
-};
-
-const createStateMachineName = (session: string) => session + "stepfc";
-
-const updateExecutionArn = (session: string, executionArn: string) => {
-  return updateItem(session, {
-    expressionAttributeNames: { "#executionArn": "executionArn" },
-    expressionAttributeValues: { ":executionArn": executionArn },
-    updateExpression: "SET #executionArn = :executionArn",
-  });
-};
-
-export const stopStateMachineExecution = async (session: Session) => {
-  if (!session.executionArn) {
-    return;
+  constructor(session: Session) {
+    this.session = session;
+    this.name = StateMachineService.createName(session.id);
+    this.sessionRepo = new SessionRepository(session.id);
+    this.lambdaService = new LambdaService(machineLambdaName);
   }
 
-  await updateItem(session.id, {
-    expressionAttributeNames: { "#executionArn": "executionArn" },
-    updateExpression: "REMOVE #executionArn",
-  });
+  static createName(id: string) {
+    return id + "stepfc";
+  }
 
-  return stepFunctions
-    .stopExecution({ executionArn: session.executionArn })
-    .promise()
-    .catch((e) => console.log("Error stopping execution: " + e));
-};
+  updateExecutionArn(executionArn: string) {
+    return this.sessionRepo.setExecutionArn(executionArn);
+  }
 
-const startStateMachine = (arn: string, session: string) => {
-  return stepFunctions
-    .startExecution({
-      stateMachineArn: arn,
-      input: session,
-    })
-    .promise();
-};
+  async stopExecution() {
+    if (!this.session.executionArn) {
+      return;
+    }
 
-export const stateMachineArn = async (session: string) => {
-  const machineName = createStateMachineName(session);
+    await this.sessionRepo.removeExecutionArn();
 
-  let listMachinesResult = await stepFunctions.listStateMachines().promise();
-  let machines = listMachinesResult.stateMachines;
+    return stepFunctions
+      .stopExecution({ executionArn: this.session.executionArn })
+      .promise()
+      .catch((e) => console.log("Error stopping execution: " + e));
+  }
 
-  while (listMachinesResult.nextToken) {
-    machines = [...machines, ...listMachinesResult.stateMachines];
-
-    listMachinesResult = await stepFunctions
-      .listStateMachines({ nextToken: listMachinesResult.nextToken })
+  async startExecution(arn: string) {
+    const { executionArn } = await stepFunctions
+      .startExecution({ stateMachineArn: arn, input: this.session.id })
       .promise();
+
+    await this.updateExecutionArn(executionArn);
   }
 
-  return machines.find((machine) => machine.name === machineName)
-    ?.stateMachineArn;
-};
+  async createMachine(player: User): Promise<string> {
+    const timeInMS = await this.getTimeout(player);
 
-export const createStateMachine = async (
-  session: Session,
-  player: User
-): Promise<string> => {
-  const timeInMS = await stateMachineTimeout(player);
+    // Generate definition json
+    const machineDefinition = getMachineDefinition(timeInMS);
 
-  // Generate definition json
-  const machineDefinition = definition(timeInMS);
+    if (__DEV__) {
+      console.log("Creating Statemachine with definition: ", machineDefinition);
+      return "success";
+    }
 
-  if (__DEV__) {
-    console.log("Creating Statemachine with definition: ", machineDefinition);
+    const result = await stepFunctions
+      .createStateMachine({
+        definition: machineDefinition,
+        name: this.name,
+        roleArn: stateMachineRoleArn,
+      })
+      .promise();
+
+    await this.startExecution(result.stateMachineArn);
+
     return "success";
   }
 
-  const result = await stepFunctions
-    .createStateMachine({
-      definition: machineDefinition,
-      name: createStateMachineName(session.id),
-      roleArn: stateMachineRoleArn,
-    })
-    .promise();
+  async updateMachine(player: User) {
+    const timeInMS = await this.getTimeout(player);
 
-  const { executionArn } = await startStateMachine(
-    result.stateMachineArn,
-    session.id
-  );
+    // Generate definition json
+    const machineDefinition = getMachineDefinition(timeInMS);
 
-  await updateExecutionArn(session.id, executionArn);
+    if (__DEV__) {
+      console.log("Updating Statemachine with definition: ", machineDefinition);
+      await this.lambdaService.invokeFunction({
+        session: this.session,
+        arn: "arn",
+      });
 
-  return "success";
-};
+      return "success";
+    }
 
-export const updateStateMachine = async (
-  session: Session,
-  player: User
-): Promise<string | undefined> => {
-  const timeInMS = await stateMachineTimeout(player);
+    const arn = await getMachineArn(this.name);
 
-  // Generate definition json
-  const machineDefinition = definition(timeInMS);
+    if (!arn) {
+      return "error no arn";
+    }
 
-  if (__DEV__) {
-    await timer(MACHINE_CREATION_TIMEOUT);
-    console.log("Updating Statemachine with definition: ", machineDefinition);
+    await stepFunctions
+      .updateStateMachine({
+        stateMachineArn: arn,
+        definition: machineDefinition,
+      })
+      .promise();
+
+    await this.lambdaService.invokeFunction({ session: this.session, arn });
+
     return "success";
   }
 
-  const arn = await stateMachineArn(session.id);
+  // Static method for deletion if session was deleted
+  static async deleteMachine(sessionId: string) {
+    const arn = await getMachineArn(StateMachineService.createName(sessionId));
 
-  if (!arn) {
-    return "error no arn";
+    if (!arn) {
+      return;
+    }
+
+    return stepFunctions.deleteStateMachine({ stateMachineArn: arn }).promise();
   }
 
-  await stepFunctions
-    .updateStateMachine({
-      stateMachineArn: arn,
-      definition: machineDefinition,
-    })
-    .promise();
+  async deleteMachine() {
+    const arn = await getMachineArn(this.name);
 
-  await timer(MACHINE_CREATION_TIMEOUT);
+    if (!arn) {
+      return;
+    }
 
-  const { executionArn } = await startStateMachine(arn, session.id);
-
-  await updateExecutionArn(session.id, executionArn);
-
-  return "success";
-};
-
-export const deleteStateMachine = async (sessionId: string) => {
-  const arn = await stateMachineArn(sessionId);
-
-  if (!arn) {
-    return;
+    return stepFunctions.deleteStateMachine({ stateMachineArn: arn }).promise();
   }
 
-  return stepFunctions.deleteStateMachine({ stateMachineArn: arn }).promise();
-};
+  private async getTimeout(user: User): Promise<number | undefined> {
+    const res = await callSpotify(user, () =>
+      spotify.getMyCurrentPlayingTrack()
+    );
 
-export const stateMachineTimeout = async (
-  user: User
-): Promise<number | undefined> => {
-  const res = await callSpotify(user, () => spotify.getMyCurrentPlayingTrack());
+    if (!res) {
+      return;
+    }
 
-  if (!res) {
-    return;
+    const {
+      body: { item, progress_ms },
+    } = res;
+
+    if (progress_ms === null || !item) {
+      return;
+    }
+
+    return item.duration_ms - progress_ms;
   }
-
-  const {
-    body: { item, progress_ms },
-  } = res;
-
-  if (progress_ms === null || !item) {
-    return;
-  }
-
-  return item.duration_ms - progress_ms;
-};
+}

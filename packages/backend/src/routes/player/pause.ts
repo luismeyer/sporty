@@ -1,14 +1,12 @@
-import { RequestHandler } from 'express';
+import { RequestHandler } from "express";
 
-import { PlayerResponse, Session } from '@sporty/api';
+import { PlayerResponse } from "@sporty/api";
 
-import { getItem } from '../../services/db';
-import { PlayerService } from '../../services/player.service';
-import { RequestService } from '../../services/request.service';
-import { SessionService } from '../../services/session.service';
-import { callSpotify, spotify } from '../../services/spotify';
-import { stopStateMachineExecution } from '../../services/state-machine';
-import { UserService } from '../../services/user';
+import { PlayerService } from "../../services/player.service";
+import { RequestService } from "../../services/request.service";
+import { SessionService } from "../../services/session.service";
+import { UserService } from "../../services/user";
+import { StateMachineService } from "../../services/state-machine";
 
 export const pausePlayer: RequestHandler<unknown, PlayerResponse> = async (
   req,
@@ -35,7 +33,9 @@ export const pausePlayer: RequestHandler<unknown, PlayerResponse> = async (
     return res.json({ success: false, error: "NO_ACTIVE_DEVICE" });
   }
 
-  await stopStateMachineExecution(session);
+  const machineService = new StateMachineService(session);
+
+  await machineService.stopExecution();
 
   const sessionService = new SessionService(session);
   const users = await sessionService.getUsers();

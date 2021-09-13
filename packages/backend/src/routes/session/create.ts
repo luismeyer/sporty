@@ -6,7 +6,7 @@ import { generateSession } from "../../helpers/session";
 import { PlayerService } from "../../services/player.service";
 import { QueueService } from "../../services/queue.service";
 import { RequestService } from "../../services/request.service";
-import { createStateMachine } from "../../services/state-machine";
+import { StateMachineService } from "../../services/state-machine";
 import { transformSession } from "../../transformers/session";
 import { transformUser } from "../../transformers/user";
 
@@ -58,7 +58,8 @@ export const createSession: RequestHandler<unknown, SessionResponse> = async (
     await playerService.start(item.track);
   }
 
-  await createStateMachine(session, user);
+  const machineService = new StateMachineService(session);
+  await machineService.createMachine(user);
 
   const frontendUser = await transformUser(user);
 

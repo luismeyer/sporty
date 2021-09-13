@@ -1,17 +1,33 @@
-import { User } from '@sporty/api';
+import { User } from "@sporty/api";
 
-import { getItem, queryItems, sessionIndex } from '../services/db';
+import { getItem, updateItem } from "../services/db";
 
 export class UserRepository {
+  private user?: User;
+
+  constructor(user?: User) {
+    this.user = user;
+  }
+
   async getUser(token: string): Promise<User | undefined> {
     return getItem<User>(token);
   }
 
-  async getUsersInSession(sessionId: string): Promise<User[]> {
-    return await queryItems<User>(sessionIndex, {
-      expressionAttributeNames: { "#session": "session" },
-      expressionAttributeValues: { ":session": sessionId },
-      keyConditionExpression: "#session = :session",
+  async deleteSession() {
+    if (!this.user) {
+      return;
+    }
+
+    return updateItem(this.user.id, {
+      expressionAttributeNames: {
+        "#session": "session",
+        "#isOwner": "isOwner",
+        "#queue": "queue",
+      },
+      expressionAttributeValues: {
+        ":queue": [],
+      },
+      updateExpression: "REMOVE #session, #isOwner SET #queue = :queue",
     });
   }
 }

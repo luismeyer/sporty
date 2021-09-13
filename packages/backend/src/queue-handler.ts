@@ -7,11 +7,7 @@ import { getItem } from "./services/db";
 import { PlayerService } from "./services/player.service";
 import { QueueService } from "./services/queue.service";
 import { SessionService } from "./services/session.service";
-import {
-  deleteStateMachine,
-  stopStateMachineExecution,
-  updateStateMachine,
-} from "./services/state-machine";
+import { StateMachineService } from "./services/state-machine";
 import { UserService } from "./services/user";
 
 export const handler: Handler<{ session?: string }> = async (event) => {
@@ -20,14 +16,15 @@ export const handler: Handler<{ session?: string }> = async (event) => {
   const session = await getItem<Session>(sessionId);
 
   if (!session) {
-    await deleteStateMachine(sessionId);
+    await StateMachineService.deleteMachine(sessionId);
     return "error no session";
   }
 
+  const machineService = new StateMachineService(session);
   const sessionService = new SessionService(session);
 
   // Stop the running execution if exists
-  await stopStateMachineExecution(session);
+  await machineService.stopExecution();
 
   const sessionUsers = await sessionService.getUsers();
 
@@ -61,5 +58,5 @@ export const handler: Handler<{ session?: string }> = async (event) => {
     await playerService.start(queueItem.track);
   }
 
-  return await updateStateMachine(session, activePlayer);
+  return await machineService.updateMachine(activePlayer);
 };

@@ -2,10 +2,11 @@ import { Session, SessionUser, User } from "@sporty/api";
 
 import { filterNullish } from "../helpers/array";
 import { SessionRepository } from "../repositories/session.repo";
+import { UserRepository } from "../repositories/user.repo";
 import { transformSession } from "../transformers/session";
 import { transformUser } from "../transformers/user";
-import { deleteItem, updateItem } from "./db";
-import { deleteStateMachine, stopStateMachineExecution } from "./state-machine";
+import { deleteItem } from "./db";
+import { StateMachineService } from "./state-machine";
 import { UserService } from "./user";
 
 export class SessionService {
@@ -13,67 +14,54 @@ export class SessionService {
 
   private session: Session;
   private sessionRepo: SessionRepository;
+  private machineService: StateMachineService;
 
   constructor(session: Session) {
     this.session = session;
     this.sessionRepo = new SessionRepository(this.session.id);
+    this.machineService = new StateMachineService(session);
   }
 
   async getUsers() {
-    this.users = await this.sessionRepo.getUsers();
+    if (!this.users) {
+      this.users = await this.sessionRepo.getUsers();
+    }
 
     return this.users;
   }
 
   async removeUser(user: User): Promise<SessionUser[]> {
-    await updateItem(user.id, {
-      expressionAttributeNames: {
-        "#session": "session",
-        "#isOwner": "isOwner",
-        "#queue": "queue",
-      },
-      expressionAttributeValues: {
-        ":queue": [],
-      },
-      updateExpression: "REMOVE #session, #isOwner SET #queue = :queue",
-    });
+    const userRepo = new UserRepository(user);
+    await userRepo.deleteSession();
 
-    const sessionUsers = this.users ?? (await this.getUsers());
+    const sessionUsers = await this.getUsers();
 
     return sessionUsers.filter((u) => u.id !== user.id);
   }
 
   async findSessionOwner() {
-    const sessionUsers = this.users ?? (await this.getUsers());
+    const sessionUsers = await this.getUsers();
 
     return sessionUsers.find((u) => u.isOwner);
   }
 
   async updateTimeout(timeout: string) {
-    await updateItem(this.session.id, {
-      expressionAttributeNames: {
-        "#timeout": "timeout",
-      },
-      expressionAttributeValues: {
-        ":timeout": timeout,
-      },
-      updateExpression: "SET #timeout = :timeout ",
-    });
+    return this.sessionRepo.setTimeout(timeout);
   }
 
   async delete() {
-    await stopStateMachineExecution(this.session);
+    await this.machineService.stopExecution();
 
     await deleteItem(this.session.id);
 
-    await deleteStateMachine(this.session.id);
+    await this.machineService.deleteMachine();
 
     const sessionUsers = this.users ?? (await this.getUsers());
     await Promise.all(sessionUsers.map(this.removeUser));
   }
 
   async hasActiveDevices() {
-    const sessionUsers = this.users ?? (await this.getUsers());
+    const sessionUsers = await this.getUsers();
 
     const isActiveList = await Promise.all(
       sessionUsers.map((user) => {
@@ -87,7 +75,7 @@ export class SessionService {
   }
 
   async get() {
-    const sessionUsers = this.users ?? (await this.getUsers());
+    const sessionUsers = await this.getUsers();
 
     const frontendUsers = await Promise.all(sessionUsers.map(transformUser));
 

@@ -6,10 +6,7 @@ import { PlayerService } from "../../services/player.service";
 import { QueueService } from "../../services/queue.service";
 import { RequestService } from "../../services/request.service";
 import { SessionService } from "../../services/session.service";
-import {
-  stopStateMachineExecution,
-  updateStateMachine,
-} from "../../services/state-machine";
+import { StateMachineService } from "../../services/state-machine";
 
 export const nextPlayer: RequestHandler<unknown, PlayerResponse> = async (
   req,
@@ -42,11 +39,13 @@ export const nextPlayer: RequestHandler<unknown, PlayerResponse> = async (
     return res.json({ success: false, error: "INTERNAL_ERROR" });
   }
 
-  await stopStateMachineExecution(session);
+  const machineService = new StateMachineService(session);
+
+  await machineService.stopExecution();
 
   const playerResponse = await playerService.start(item.track);
 
-  await updateStateMachine(session, user);
+  await machineService.updateMachine(user);
 
   res.json({
     success: true,

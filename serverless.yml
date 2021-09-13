@@ -12,6 +12,9 @@ custom:
   queueFunction:
     name: ${self:custom.awsEnv.assetPreName}-queue
     arn: arn:aws:lambda:${self:custom.awsEnv.arnRegionAndAccount}:function:${self:custom.queueFunction.name}
+  machineFunction:
+    name: ${self:custom.awsEnv.assetPreName}-machine
+    arn: arn:aws:lambda:${self:custom.awsEnv.arnRegionAndAccount}:function:${self:custom.machineFunction.name}
   stateMachineRole:
     name: Sporty-${self:custom.stage}-StateMachine
     arn: arn:aws:iam::#{AWS::AccountId}:role/${self:custom.stateMachineRole.name}
@@ -63,9 +66,16 @@ provider:
           Action:
             - iam:PassRole
           Resource: ${self:custom.stateMachineRole.arn}
+
+        - Effect: Allow
+          Action: 
+            - lambda:InvokeFunction
+          Resource: ${self:custom.machineFunction.arn}
+
   environment:
     DDB_TABLE: ${self:custom.table.name}
     QUEUE_LAMBDA_ARN: ${self:custom.queueFunction.arn}
+    MACHINE_LAMBDA_NAME: ${self:custom.machineFunction.name}
     SESSION_INDEX: sessionIndex
     ACCESS_TOKEN_INDEX: accessTokenIndex
     SPOTIFY_ID_INDEX: spotifyIdIndex
@@ -105,6 +115,17 @@ functions:
   queue:
     name: ${self:custom.queueFunction.name}
     handler: packages/backend/dist/queue-handler.handler
+    package:
+      include:
+        - "packages/backend/**"
+    jetpack:
+      roots:
+        - "."
+        - "packages/backend"
+
+  machine:
+    name: ${self:custom.machineFunction.name}
+    handler: packages/backend/dist/machine-handler.handler
     package:
       include:
         - "packages/backend/**"

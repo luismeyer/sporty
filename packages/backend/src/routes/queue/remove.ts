@@ -6,7 +6,6 @@ import { updateItem } from "../../services/db";
 import { QueueService } from "../../services/queue.service";
 import { RequestService } from "../../services/request.service";
 import { SessionService } from "../../services/session.service";
-import { transformQueue } from "../../transformers/queue";
 
 type Query = {
   id?: string;

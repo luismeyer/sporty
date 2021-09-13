@@ -1,17 +1,11 @@
 import { RequestHandler } from "express";
 
-import { PlayerResponse, Session } from "@sporty/api";
+import { PlayerResponse } from "@sporty/api";
 
-import { getItem } from "../../services/db";
 import { PlayerService } from "../../services/player.service";
 import { RequestService } from "../../services/request.service";
 import { SessionService } from "../../services/session.service";
-import { callSpotify, spotify } from "../../services/spotify";
-import {
-  stopStateMachineExecution,
-  updateStateMachine,
-} from "../../services/state-machine";
-import { UserService } from "../../services/user";
+import { StateMachineService } from "../../services/state-machine";
 
 export const startPlayer: RequestHandler<unknown, PlayerResponse> = async (
   req,
@@ -39,7 +33,9 @@ export const startPlayer: RequestHandler<unknown, PlayerResponse> = async (
     return res.json({ success: false, error: "NO_ACTIVE_DEVICE" });
   }
 
-  await stopStateMachineExecution(session);
+  const machineService = new StateMachineService(session);
+
+  await machineService.stopExecution();
 
   const users = await sessionService.getUsers();
 
@@ -47,7 +43,7 @@ export const startPlayer: RequestHandler<unknown, PlayerResponse> = async (
 
   const player = await playerService.sync();
 
-  await updateStateMachine(session, user);
+  await machineService.updateMachine(user);
 
   res.json({
     success: true,

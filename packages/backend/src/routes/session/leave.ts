@@ -1,10 +1,10 @@
-import { RequestHandler } from 'express';
+import { RequestHandler } from "express";
 
-import { MessageResponse, Session } from '@sporty/api';
+import { MessageResponse } from "@sporty/api";
 
-import { getItem, updateItem } from '../../services/db';
-import { RequestService } from '../../services/request.service';
-import { SessionService } from '../../services/session.service';
+import { updateItem } from "../../services/db";
+import { RequestService } from "../../services/request.service";
+import { SessionService } from "../../services/session.service";
 
 export const leaveSession: RequestHandler<unknown, MessageResponse> = async (
   req,
