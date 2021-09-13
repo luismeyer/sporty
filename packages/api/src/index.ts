@@ -74,7 +74,8 @@ export type ErrorResponse = {
     | "WRONG_PARAMETER"
     | "INTERNAL_ERROR"
     | "NOT_IMPLEMENTED"
-    | "NO_SESSION";
+    | "NO_SESSION"
+    | "NOT_PLAYER";
 };
 
 export type QueueItem = {

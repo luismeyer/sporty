@@ -18,6 +18,10 @@ export const getPlayer: RequestHandler<unknown, PlayerResponse> = async (
     return res.json({ success: false, error: "INVALID_TOKEN" });
   }
 
+  if (!user.isPlayer) {
+    return res.json({ success: false, error: "NOT_PLAYER" });
+  }
+
   const session = await requestService.getSession();
 
   if (!session) {
